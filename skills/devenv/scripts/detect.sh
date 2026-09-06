@@ -8,6 +8,7 @@ langs=()
 [ -f go.mod ] && langs+=(go)
 [ -f package.json ] && langs+=(node)
 { [ -f pom.xml ] || ls build.gradle* >/dev/null 2>&1; } && langs+=(java)
+{ [ -f cmake-android ] || find . -maxdepth 4 -name AndroidManifest.xml -print -quit 2>/dev/null | grep -q .; } && langs+=(android)
 echo "langs=${langs[*]:-}"
 
 remote=$(git remote get-url origin 2>/dev/null || true)

@@ -1,58 +1,72 @@
 ---
 name: devenv
-description: Set up or repair a project's Nix devshell, LSP and formatter configs, and Claude Code hooks from dev-templates, so a fresh clone opens in VSCode with nothing red. Use when asked to set up the development environment ("ortamı kur", "devenv", "bu rust projesi"), or when a project has no flake.nix/.envrc.
+description: Set up a project's Nix devshell, LSP and formatter configs, and Claude Code hooks from dev-templates so a fresh clone (or an empty folder) opens in VSCode with nothing red. Use for "/devenv", "ortamı kur", "bu rust projesi", or when a project has no flake.nix/.envrc.
 ---
 
 # devenv
 
-Goal: after this skill, `direnv allow` + `code .` from the devshell shows no errors in the editor. Files are copied from the dev-templates flake, never written by hand. Existing files are never touched.
+Goal: after this skill, `code .` from the devshell shows no errors in the editor. Files are copied from the dev-templates flake, never written by hand. Existing files are never touched.
 
-Scripts live next to this file in `scripts/` (installed at `~/.claude/skills/devenv/scripts/`). Use them; do not reimplement their steps in prose.
+Scripts: `~/.claude/skills/devenv/scripts/` (detect.sh, apply.sh, init.sh, verify.sh). Use them; do not reimplement their steps in prose.
 
 ## 1. Detect
 
-Run `~/.claude/skills/devenv/scripts/detect.sh` in the project root. Read every line.
+Run `detect.sh` in the project root. Read every line.
 
-- `langs` is the proposal. If it is empty or looks wrong (e.g. a Makefile-only C project), ask the user.
-- `own=false` means a foreign repository: added files go to `.git/info/exclude`, nothing is committed, and no style files (.clang-format, rustfmt.toml, ...) are added.
-- Ask exactly one question if unknown: "cross target var mı? (aarch64, armv7, yok)". Never guess targets.
+- `own=false` → foreign repository: added files go to `.git/info/exclude`, nothing is committed, no style files are added, `shell.nix` replaces `flake.nix`.
+- `langs=` is only a pre-selection for the menu, never a decision.
 
-## 2. Apply
+## 2. Menu (always)
+
+One AskUserQuestion call with these questions, in this order. Arguments given with the command (`/devenv rust c++ arm64`) pre-select answers but the menu is still shown, so the user confirms everything in one place.
+
+1. Languages, multi-select: rust, cpp, go, node, java, android. Pre-select detected ones. Aliases: `c++`/`cxx`/`c` → cpp; `ts`/`js`/`typescript` → node; `golang` → go.
+2. Cross target, multi-select: aarch64, armv7, none. Aliases: `arm64` → aarch64; `arm`/`armv7l` → armv7. Never guess.
+3. Android, only if `android` was chosen: API level (21 default) and NDK version (23.2.8568313 default); answers go into the `android = { ... };` line of flake.nix/shell.nix via apply.sh's output file (edit that single line by hand, nothing else).
+4. Go module path, only if `go` was chosen and `go.mod` does not exist.
+
+Foreign vs own is decided by detect, not by the user.
+
+## 3. Apply
 
 ```
-~/.claude/skills/devenv/scripts/apply.sh --langs "<langs>" [--targets "<targets>"] [--foreign]
+apply.sh --langs "<langs>" [--targets "<targets>"] [--foreign]
 ```
 
-Set `DEV_TEMPLATES_REF` to a local `path:` ref only when the user says the templates repo is not pushed yet. Report the `created:` / `kept:` / `excluded:` lines verbatim.
+Creates `.git` if missing (own mode), the devshell, language dotfiles, `.claude/` with the format hook. Report the `created:` / `kept:` / `excluded:` lines verbatim.
 
-If `kept: .gitignore` appears, merge the template's entries the script printed into the existing file by appending only the missing lines. This is the single place where you edit a file by hand.
+`kept: .gitignore` → append the missing template entries to the existing file. This is the only file you edit by hand.
 
-If `flake_ours=no` and `flake=yes`, the project has its own devshell: do not touch it, and run the verify step inside it anyway.
+`flake_ours=no` and `flake=yes` → the project has its own devshell: leave it, still run verify inside it.
 
-Foreign repositories get `shell.nix` + `use nix` instead of `flake.nix`: flakes require the file to be tracked by git, which a foreign repo must never see. The shell is pinned to the dev-templates revision current at apply time.
+## 4. Init (new folder only)
 
-## 3. Verify (green proof)
+When a chosen language has no project file (no Cargo.toml / CMakeLists.txt / go.mod / package.json):
+
+```
+direnv exec . ~/.claude/skills/devenv/scripts/init.sh --langs "<langs>" [--module <go module>]
+```
+
+Runs the language's own generator (cargo init, go mod init, pnpm init + typescript) or a template (`init-cpp`, `android-native`). `android` implies `cpp` and usually `rust`; select them too. Never write these files yourself.
+
+## 5. Verify (green proof)
 
 ```
 direnv exec . ~/.claude/skills/devenv/scripts/verify.sh "<langs>"
 ```
 
-`direnv exec` loads the same `.envrc` the editor will use, so a pass here is a pass for VSCode.
-
-Runs the one-time steps that otherwise leave the editor red (cmake configure with compile db, cargo fetch, dependency install) and then the checks: `cargo check`, `clangd --check`, `go vet`, `tsc --noEmit`.
+Runs the one-time steps that otherwise leave the editor red (cmake configure with compile db, cargo fetch, dependency install) then `cargo check`, `clangd --check`, `go vet`, `tsc --noEmit`.
 
 - All `PASS`: done. Tell the user to open VSCode from this shell (`code .`).
-- Any `FAIL`: report the printed cause and the fix. Typical: `go.mod` needs a newer Go than nixpkgs provides; `rust-toolchain.toml` lacks a cross target (add the target to the file, not to flake.nix). Do not declare success.
+- Any `FAIL`: report the printed cause and the fix. Typical: `go.mod` wants a newer Go than nixpkgs has; `rust-toolchain.toml` lacks a cross target (add it to that file, not to flake.nix). Do not declare success.
 
-## 4. Own project finishing touches
+## 6. Own project finishing touches
 
-Only when `own=true`:
-- Fill CLAUDE.md sections "Ortam" (build/test/lint commands) and "Yerleşim" from what the project actually contains. Keep the file short.
-- `git add` the created files; do not commit unless asked.
+Only when `own=true`: fill CLAUDE.md "Ortam" (build/test/lint commands) and "Yerleşim" from what the project contains, keep it short; `git add` the created files; do not commit unless asked.
 
 ## Never
 
-- Write flake.nix, .clangd, or formatter configs by hand.
+- Write flake.nix, shell.nix, .clangd, CMakeLists.txt or formatter configs by hand.
 - Change `langs`/`targets` in a flake.nix the project owned before this run.
-- Force `-std=` or `-xc++` flags into a foreign project's .clangd.
+- Force `-std=` or `-xc++` into a foreign project's .clangd.
 - Commit in a foreign repository.

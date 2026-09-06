@@ -19,6 +19,8 @@
         go = template "go" ".golangci.yml";
         node = template "node" "biome.json";
         android-native = template "android-native" "cmake-android helper, VSCode cmake tasks";
+        init-cpp = template "init-cpp" "CMakeLists.txt + src/main.cpp for an empty project";
+        init-node = template "init-node" "tsconfig.json for an empty project";
         claude = template "claude" "CLAUDE.md skeleton, .claude/settings.json with format hook, scripts/fmt.sh";
         default = self.templates.base;
       };

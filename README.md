@@ -10,6 +10,8 @@ nix flake init -t github:bulent-kopuklu/dev-templates#go      # .golangci.yml
 nix flake init -t github:bulent-kopuklu/dev-templates#node    # biome.json
 nix flake init -t github:bulent-kopuklu/dev-templates#claude  # CLAUDE.md, .claude/settings.json, scripts/fmt.sh
 nix flake init -t github:bulent-kopuklu/dev-templates#shell   # shell.nix + .envrc (use nix) when flake.nix cannot be committed
+nix flake init -t github:bulent-kopuklu/dev-templates#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
+nix flake init -t github:bulent-kopuklu/dev-templates#init-node # tsconfig.json for an empty project
 ```
 
 Existing files are never overwritten. In the generated `flake.nix` edit two lines:
@@ -27,8 +29,10 @@ linkers are exported as `CARGO_TARGET_<TRIPLE>_LINKER`, nothing is written to
 
 ## Claude Code skill
 
-`skills/devenv` drives the templates from inside any project: detect languages,
-apply templates, prove the editor will be green. Install once:
+`skills/devenv` drives the templates from inside any project or an empty folder:
+`/devenv rust c++ --target aarch64` (or a menu when arguments are missing), then
+detect, apply, init the language's own project files, and prove the editor will
+be green. Install once:
 
 ```bash
 ln -s "$PWD/skills/devenv" ~/.claude/skills/devenv

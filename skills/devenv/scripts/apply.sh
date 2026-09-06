@@ -7,8 +7,8 @@
 # every file this script creates is added to .git/info/exclude and only a
 # minimal .clangd is written for cpp.
 set -euo pipefail
+. "$(dirname "$0")/common.sh"
 
-ref="${DEV_TEMPLATES_REF:-github:bulent-kopuklu/dev-templates}"
 langs=""; targets=""; foreign=no
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -21,19 +21,11 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$langs" ] || { echo "--langs required" >&2; exit 2; }
 
+[ -d .git ] || [ "$foreign" = yes ] || { git init -q && echo "created: .git"; }
+
 # nix flake init marks what it writes intent-to-add (shows as " A"); foreign mode undoes that below.
 snapshot() { git status --porcelain --untracked-files=all 2>/dev/null | cut -c4- | sort; }
 before=$(snapshot)
-
-# nix flake init exits 1 when any file already exists; the rest is still written.
-init() {
-  nix flake init -t "${ref}#$1" 2>&1 | while IFS= read -r line; do
-    case "$line" in
-      wrote:*)     f=${line#wrote: \"}; f=${f%\"}; [ -d "$f" ] || echo "created: ${f#"$PWD"/}" ;;
-      refusing*)   f=${line#refusing to overwrite existing file \"}; f=${f%\"}; echo "kept:    ${f#"$PWD"/}" ;;
-    esac
-  done || true
-}
 
 set_lists() {
   local file=$1 quoted
