@@ -4,7 +4,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-dest="${CLAUDE_HOME:-$HOME/.claude}/skills"
+dest="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 mkdir -p "$dest"
 
 for skill in "$here"/skills/*/; do
