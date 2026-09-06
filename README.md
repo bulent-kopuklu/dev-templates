@@ -32,8 +32,8 @@ linkers are exported as `CARGO_TARGET_<TRIPLE>_LINKER`, nothing is written to
 `skills/devenv` drives the templates from inside any project or an empty folder:
 `/devenv rust c++ --target aarch64` (or a menu when arguments are missing), then
 detect, apply, init the language's own project files, and prove the editor will
-be green. Install once:
+be green. Install once (symlinks into `~/.claude/skills`, so `git pull` updates them):
 
 ```bash
-ln -s "$PWD/skills/devenv" ~/.claude/skills/devenv
+./install.sh
 ```
