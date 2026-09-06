@@ -1,0 +1,47 @@
+CompileFlags:
+  CompilationDatabase: "build"
+  # Analizi hızlandırmak yerine daha titiz yapması için:
+  Add: [
+    "-xc++",                # Dosyayı mutlaka C++ olarak işle
+    "-Wall",                # Tüm uyarıları gör (arka planda)
+    "-std=c++20"            # Standardı zorla
+  ]
+  Remove: [-W*]             # Bazı sinir bozucu derleyici uyarılarını temizler
+
+Completion:
+  AllScopes: Yes                  # Include edilmemiş sembolleri de öner
+  ArgumentLists: FullPlaceholders
+  HeaderInsertion: IWYU           # Seçtiğin an yukarıya #include'u otomatik fırlatır
+  CodePatterns: All
+
+Index:
+  StandardLibrary: Yes      # Standart kütüphaneyi (std::) derinlemesine indexle
+  Background: Build
+
+Hover:
+  ShowAKA: Yes              # Type alias'ların (typedef) gerçek isimlerini göster (TSDuck için çok kritiktir)
+
+InlayHints:
+  Enabled: true
+  Designators: true
+  ParameterNames: true
+  DeducedTypes: true
+  DefaultArguments: false
+  BlockEnd: false
+
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add: [
+      performance*, 
+      modernize*
+    ]
+    Remove: [
+      modernize-use-trailing-return-type, 
+      modernize-use-auto
+    ]
+    CheckOptions:
+      readability-identifier-naming.ClassCase: CamelCase  
+      readability-identifier-naming.VariableCase: CamelCase
+      readability-identifier-naming.MemberCase: CamelCase
+      readability-identifier-naming.MemberPrefix: _

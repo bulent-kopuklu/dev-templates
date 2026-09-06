@@ -1,0 +1,218 @@
+#! /usr/bin/env bash
+
+
+APP="$0"
+
+SCRIPTS=$(dirname ${APP})
+
+ANDROID_MIN_SDK=${ANDROID_MIN_SDK:-21}
+ANDROID_PLATFORM=android-$ANDROID_MIN_SDK
+ANDROID_NDK_VERSION=${ANDROID_NDK_VERSION:-23.2.8568313}
+
+ANDROID_SDK_HOME=${ANDROID_SDK_HOME:-$HOME/Android/Sdk}
+ANDROID_NDK_HOME=$ANDROID_SDK_HOME/ndk/$ANDROID_NDK_VERSION
+ANDROID_CMAKE_VERSION=${ANDROID_CMAKE_VERSION:-3.22.1}
+
+TARGET="linux-pc"
+BUILD_VARIANT="Debug"
+ABI="x86_64"
+DEMO=0
+
+export DEVICE_API_VERSION=$(git describe --tags --always --dirty=-SNAPSHOT)
+
+ANDROID_CMAKE_APP=$ANDROID_SDK_HOME/cmake/$ANDROID_CMAKE_VERSION/bin/cmake
+ANDROID_NINJA_APP=$ANDROID_SDK_HOME/cmake/$ANDROID_CMAKE_VERSION/bin/ninja
+ANDROID_CMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake
+
+function configure_current_machine() {
+    cmake \
+        -DCMAKE_C_COMPILER:FILEPATH=$(which clang) \
+        -DCMAKE_CXX_COMPILER:FILEPATH=$(which clang++) \
+        -DCMAKE_CXX_FLAGS_INIT="-fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wformat -Werror=format-security -fPIC -fvisibility=hidden" \
+        -DCMAKE_BUILD_TYPE=$BUILD_VARIANT \
+        -S $PWD -B $BUILD_DIR -G Ninja
+
+    if [ -L "$PWD/build/current" ]; then
+        rm "$PWD/build/current"
+    fi
+
+    ln -s $BUILD_VARIANT_OUTPUT "$PWD/build/current"
+    echo "cmake" > build/cmake-app
+}
+
+function configure_android_machine() {
+    $ANDROID_CMAKE_APP \
+        -DDEMO=$DEMO \
+        -DANDROID_ABI=$ABI \
+        -DANDROID_API_LEVEL=$ANDROID_MIN_SDK \
+        -DANDROID_PLATFORM=$ANDROID_PLATFORM \
+        -DANDROID_NDK=$ANDROID_NDK_HOME \
+        -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG" \
+        -DCMAKE_CXX_FLAGS="-fPIC -fvisibility=hidden" \
+        -DCMAKE_TOOLCHAIN_FILE=$ANDROID_CMAKE_TOOLCHAIN_FILE \
+        -DCMAKE_MAKE_PROGRAM=$ANDROID_NINJA_APP \
+        -DANDROID_STL=c++_static \
+        -DCMAKE_BUILD_TYPE=$BUILD_VARIANT \
+        -S $PWD -B $BUILD_DIR -G Ninja
+
+    if [ -L "$PWD/build/current" ]; then
+        rm "$PWD/build/current"
+    fi
+
+    ln -s $BUILD_VARIANT_OUTPUT "$PWD/build/current"
+    echo "$ANDROID_CMAKE_APP" > build/cmake-app
+}
+
+function configure() {
+    case $TARGET in
+        "linux-pc")
+            configure_current_machine
+            ;;
+        "android")
+            configure_android_machine
+            ;;
+        *)
+            echo "undefined target"
+            exit 1
+            ;;
+    esac
+}
+
+function build() {
+    if [ ! -L "$PWD/build/current" ]; then
+        configure_current_machine
+    fi
+
+    cmake_app=$(cat build/cmake-app)
+    ${cmake_app} --build build/current --target all
+
+}
+
+
+function build-all-debug() {
+    $APP configure -t linux-pc -a x86_64 -b Debug
+    $APP build
+
+    $APP configure -t android -a x86_64 -b Debug
+    $APP build
+
+    $APP configure -t android -a x86 -b Debug
+    $APP build
+
+    $APP configure -t android -a arm64-v8a -b Debug
+    $APP build
+
+    $APP configure -t android -a armeabi-v7a -b Debug
+    $APP build
+}
+
+function build-all-relwithdebinfo() {
+    $APP configure -t linux-pc -a x86_64 -b RelWithDebInfo
+    $APP build
+
+    $APP configure -t android -a x86_64 -b RelWithDebInfo
+    $APP build
+
+    $APP configure -t android -a x86 -b RelWithDebInfo
+    $APP build
+
+    $APP configure -t android -a arm64-v8a -b RelWithDebInfo
+    $APP build
+
+    $APP configure -t android -a armeabi-v7a -b RelWithDebInfo
+    $APP build
+}
+
+function build-all() {
+    build-all-debug
+    build-all-relwithdebinfo
+}
+
+function clean() {
+    cmake_app=$(cat build/cmake-app)
+    ${cmake_app} --build build/current --target clean
+}
+
+function deep-clean() {
+    if [ -d "build" ]; then
+        rm -rf build    
+    fi
+}
+function soft-clean() {
+    if [ -d "build" ]; then
+        cd build
+        rm -rf android-package/ 
+        rm -rf current
+        find . -mindepth 4 -maxdepth 4  ! -name "3rd-ports" -exec rm -rf  {} \;
+    fi
+}
+
+if [ $# -gt 0 ]; then
+    COMMAND="$1"
+else
+    echo "Unknown command $1"
+    exit 1
+fi
+
+POSITIONAL_ARGS=()
+while [[ $# -gt 1 ]]; do
+    case $2 in
+        -t|--target)
+            TARGET="$3"
+            shift
+            shift
+            ;;
+        -b|--build-variant)
+            BUILD_VARIANT="$3"
+            shift
+            shift
+            ;;
+        -a|--abi)
+            ABI="$3"
+            shift
+            shift
+            ;;
+        -d|--demo)
+            DEMO="$3"
+            shift
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $2"
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$2") # save positional arg
+            shift # past argument
+            ;;
+    esac
+done
+
+BUILD_VARIANT_OUTPUT=$TARGET/$ABI/$BUILD_VARIANT 
+BUILD_DIR=$PWD/build/$BUILD_VARIANT_OUTPUT
+
+
+case $COMMAND in
+    "configure")
+        configure
+        ;;
+    "build")
+        build
+        ;;
+    "build-all")
+        build-all
+        ;;
+    "clean")
+        clean
+        ;;
+    "deep-clean")
+        deep-clean
+        ;;
+    "soft-clean")
+        soft-clean
+        ;;
+    *)
+        echo "Unknown command $COMMAND"
+        exit 1
+esac
+

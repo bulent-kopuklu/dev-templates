@@ -1,0 +1,42 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+IndentWidth: 2
+AccessModifierOffset: -2
+AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Left
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
+  AfterUnion: true
+  AfterFunction: true
+  BeforeElse: true
+  BeforeCatch: true
+ColumnLimit: 100
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DerivePointerAlignment: true
+KeepEmptyLines:
+  AtEndOfFile: true
+  AtStartOfBlock: true
+  AtStartOfFile: true
+MaxEmptyLinesToKeep: 1
+
+AllowShortBlocksOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
+
+
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: false
+BinPackArguments: true
+BinPackParameters: true
+BreakInheritanceList: AfterColon
+BreakConstructorInitializers: AfterColon
+SpaceBeforeCpp11BracedList: true
+
+CompactNamespaces: true
+PointerAlignment: Left
+ReferenceAlignment: Pointer

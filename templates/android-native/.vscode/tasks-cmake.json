@@ -1,0 +1,117 @@
+{
+    "version": "2.0.0",
+    /*
+        SET THESE FOR CURRENT ENVIRONMENT
+    */
+    "options": {
+        "env": {
+        
+        }
+    },
+    "tasks": [
+        {
+            "label": "CMake: configure",
+            "type": "shell",
+            "command": "./cmake-android configure --target ${input:target} --abi ${input:abi} --build-variant ${input:buildvariant}",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template configure task"
+        },
+        {
+            "label": "CMake: build",
+            "type": "shell",
+            "command": "./cmake-android build",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template build task"
+        },
+        {
+            "label": "CMake: build-all",
+            "type": "shell",
+            "command": "./cmake-android build-all",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template build-all task"
+        },
+        {
+            "label": "CMake: clean",
+            "type": "shell",
+            "command": "./cmake-android clean",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template clean task"
+        },
+        {
+            "label": "CMake: deep-clean",
+            "type": "shell",
+            "command": "./cmake-android deep-clean",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake rm -rf build"
+        },
+        {
+            "label": "CMake: soft-clean",
+            "type": "shell",
+            "command": "./cmake-android soft-clean",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake rm -rf build/* (except 3rd-ports)"
+        },
+        {
+            "label": "CMake: clean rebuild",
+            "type": "shell",
+            "command": "./cmake-android clean && ./cmake-android build",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template clean rebuild task"
+        },
+    ],
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "target",
+            "description": "What environment do you want to build?",
+            "options": [
+                "linux-pc",
+                "android",
+            ],
+            "default": "linux-pc"
+        },
+        {
+            "type": "pickString",
+            "id": "abi",
+            "description": "What environment do you want to build?",
+            "options": [
+                "x86_64",
+                "x86",
+                "arm64-v8a",
+                "armeabi-v7a"
+            ],
+            "default": "x86_64"
+        },
+        {
+            "type": "pickString",
+            "id": "buildvariant",
+            "description": "What environment do you want to build?",
+            "options": [
+                "Debug",
+                "Release",
+                "RelWithDebInfo",
+                "MinSizeRel",
+            ],
+            "default": "Debug"
+        },
+        {
+            "type": "pickString",
+            "id": "repository",
+            "description": "Which repository you want to publish to?",
+            "options": [
+                "local",
+                "remote",
+                "all",
+            ],
+            "default": "local"
+        },
+
+    ]
+}
