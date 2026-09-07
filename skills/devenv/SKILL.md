@@ -24,7 +24,7 @@ One AskUserQuestion call with these questions, in this order. Arguments given wi
 2. Cross target, multi-select: aarch64, armv7, none. Aliases: `arm64` → aarch64; `arm`/`armv7l` → armv7. Never guess.
 3. Android, only if `android` was chosen: API level (21 default) and NDK version (23.2.8568313 default); answers go into the `android = { ... };` line of flake.nix/shell.nix via apply.sh's output file (edit that single line by hand, nothing else).
 4. Go module path, only if `go` was chosen and `go.mod` does not exist.
-5. Node major version (20, 22, 24), only if `node` was chosen and neither `.nvmrc` nor `.node-version` exists. Write the answer to `.nvmrc` (e.g. `22`); the devshell picks `nodejs_<major>` from it. Older projects with native modules (better-sqlite3 and friends) usually need 20 or 22.
+5. Node major version (20, 22, 24), only if `node` was chosen and neither `.nvmrc` nor `.node-version` exists. Write the answer to `.nvmrc` (e.g. `22`) and run `direnv reload` (nix-direnv only watches flake.nix/.envrc); the devshell picks `nodejs_<major>` from it. Older projects with native modules (better-sqlite3 and friends) usually need 20 or 22.
 
 Foreign vs own is decided by detect, not by the user.
 
