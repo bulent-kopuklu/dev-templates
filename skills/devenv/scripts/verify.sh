@@ -9,7 +9,13 @@ pass() { echo "PASS $1"; }
 errlines() { local m; m=$(grep -m3 -iE 'error|ERR_' "$log" | grep -v 'A complete log' | cut -c1-160); [ -n "$m" ] && echo "$m" || tail -3 "$log"; }
 failed() { echo "FAIL $1: $2"; fail=1; }
 
+# the editor is red without its language server, whatever else passes
+lsp_for() { case "$1" in rust) echo rust-analyzer ;; cpp) echo clangd ;; go) echo gopls ;; esac; }
 for l in $langs; do
+  lsp=$(lsp_for "$l")
+  if [ -n "$lsp" ] && ! command -v "$lsp" >/dev/null 2>&1; then
+    failed "$l" "$lsp not in the devshell (own flake.nix? add it)"; continue
+  fi
   case "$l" in
     rust)
       out=$(cargo fetch 2>&1 && cargo check --all-targets 2>&1) && pass rust || failed rust "$(echo "$out" | grep -m3 -i 'error')" ;;
@@ -17,7 +23,9 @@ for l in $langs; do
       if [ -f CMakeLists.txt ] && [ ! -f build/compile_commands.json ]; then
         cmake -S . -B build -G Ninja >"$log" 2>&1 || { failed cpp "cmake configure: $(grep -A3 -m1 'CMake Error' "$log" | cut -c1-160)"; continue; }
       fi
-      src=$(find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.cc' -o -name '*.c' \) -print 2>/dev/null | head -1)
+      # check a file the compile db knows, preferring the project's own sources over fetched deps
+      src=$(jq -r '.[].file' build/compile_commands.json 2>/dev/null | grep -v '/build/_deps/' | head -1)
+      [ -n "$src" ] || src=$(find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.cc' -o -name '*.c' \) -print 2>/dev/null | head -1)
       [ -n "$src" ] || { failed cpp "no source file found"; continue; }
       # --check also self-tests refactoring tweaks and counts their misses as errors; only real diagnostics matter
       diags=$(clangd --check="$src" 2>&1 | grep -E '^E\[[0-9:.]+\] \[[a-z_]+\] Line ')
