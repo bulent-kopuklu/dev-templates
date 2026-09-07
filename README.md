@@ -36,3 +36,13 @@ be green. Install once (symlinks into `~/.claude/skills`, so `git pull` updates 
 ```bash
 ./install.sh
 ```
+
+## Spike repos on the Pi
+
+`pi/newrepo` lives on the Pi (`scp pi/newrepo dietpi@mediagw.local:/usr/local/bin/`), `bin/newspike`
+runs on the laptop (installed by `install.sh` into `~/.local/bin`):
+
+```bash
+newspike nats-bridge                          # empty spike
+newspike nats-bridge git@gitlab:grup/repo.git # fork flow: origin = pi, upstream = company
+```

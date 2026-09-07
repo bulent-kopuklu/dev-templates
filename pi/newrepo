@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Creates a bare, group-shared git repo under the workspace on the Pi.
+#   newrepo <name>          -> /mnt/wd12/workspace/<name>.git
+# One-time setup (as dietpi):
+#   sudo usermod -aG git dietpi && sudo chmod 2775 /mnt/wd12/workspace
+set -euo pipefail
+root="${GIT_ROOT:-/mnt/wd12/workspace}"
+name="${1:?usage: newrepo <name>}"
+name="${name%.git}"
+repo="$root/$name.git"
+[ -e "$repo" ] && { echo "exists: $repo" >&2; exit 1; }
+git init -q --bare --shared=group "$repo"
+echo "$repo"

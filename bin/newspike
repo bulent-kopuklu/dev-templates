@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Creates a spike repo on the Pi and a local clone wired to it.
+#   newspike <name>                 empty repo, empty clone
+#   newspike <name> <upstream-url>  fork flow: clone upstream, push it to the Pi,
+#                                   remotes: origin = pi, upstream = company
+# Needs on the laptop: git config --global url."git@mediagw.local:/mnt/wd12/workspace/".insteadOf "pi:"
+set -euo pipefail
+host="${PI_HOST:-dietpi@mediagw.local}"
+name="${1:?usage: newspike <name> [upstream-url]}"
+upstream="${2:-}"
+name="${name%.git}"
+[ -e "$name" ] && { echo "exists here: $name" >&2; exit 1; }
+
+ssh "$host" newrepo "$name" >/dev/null
+echo "pi:      $name.git"
+
+if [ -n "$upstream" ]; then
+  git clone -q "$upstream" "$name"
+  cd "$name"
+  git remote rename origin upstream
+  git remote add origin "pi:$name.git"
+  git push -q -u origin HEAD
+  echo "remotes: origin=pi, upstream=$upstream"
+else
+  git clone -q "pi:$name.git" "$name" 2>/dev/null || { mkdir "$name"; git -C "$name" init -q; git -C "$name" remote add origin "pi:$name.git"; }
+  echo "clone:   ./$name (origin=pi)"
+fi

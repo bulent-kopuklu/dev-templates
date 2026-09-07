@@ -7,6 +7,11 @@ here="$(cd "$(dirname "$0")" && pwd)"
 dest="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 mkdir -p "$dest"
 
+bindest="$HOME/.local/bin"; mkdir -p "$bindest"
+for tool in "$here"/bin/*; do
+  ln -sfn "$tool" "$bindest/$(basename "$tool")" && echo "linked:  $bindest/$(basename "$tool")"
+done
+
 for skill in "$here"/skills/*/; do
   name=$(basename "$skill")
   target="$dest/$name"
