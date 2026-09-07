@@ -98,6 +98,8 @@ let
         export CC="${llvm.clang}/bin/clang"
         export CXX="${llvm.clang}/bin/clang++"
         export CMAKE_EXPORT_COMPILE_COMMANDS=ON
+        # CMake 4 refuses cmake_minimum_required < 3.5; old FetchContent deps still declare it
+        export CMAKE_POLICY_VERSION_MINIMUM=3.5
       '';
     };
 

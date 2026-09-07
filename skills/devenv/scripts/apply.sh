@@ -21,7 +21,8 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$langs" ] || { echo "--langs required" >&2; exit 2; }
 
-[ -d .git ] || [ "$foreign" = yes ] || { git init -q && echo "created: .git"; }
+# a flake only sees files git knows about, so an existing non-git project gets all files marked intent-to-add
+[ -d .git ] || [ "$foreign" = yes ] || { git init -q && git add -N -A && echo "created: .git (files intent-to-add)"; }
 
 # nix flake init marks what it writes intent-to-add (shows as " A"); foreign mode undoes that below.
 snapshot() { git status --porcelain --untracked-files=all 2>/dev/null | cut -c4- | sort; }

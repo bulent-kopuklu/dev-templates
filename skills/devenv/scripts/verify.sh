@@ -15,7 +15,7 @@ for l in $langs; do
       out=$(cargo fetch 2>&1 && cargo check --all-targets 2>&1) && pass rust || failed rust "$(echo "$out" | grep -m3 -i 'error')" ;;
     cpp)
       if [ -f CMakeLists.txt ] && [ ! -f build/compile_commands.json ]; then
-        out=$(cmake -S . -B build -G Ninja 2>&1) || { failed cpp "cmake configure: $(echo "$out" | tail -3)"; continue; }
+        cmake -S . -B build -G Ninja >"$log" 2>&1 || { failed cpp "cmake configure: $(grep -A3 -m1 'CMake Error' "$log" | cut -c1-160)"; continue; }
       fi
       src=$(find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.cc' -o -name '*.c' \) -print 2>/dev/null | head -1)
       [ -n "$src" ] || { failed cpp "no source file found"; continue; }
