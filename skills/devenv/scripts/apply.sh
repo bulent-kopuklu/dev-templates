@@ -64,7 +64,9 @@ for l in $langs; do
       else
         init cpp
       fi ;;
-    rust|go|node) [ "$foreign" = yes ] || init "$l" ;;
+    rust) [ "$foreign" = yes ] || [ -f .rustfmt.toml ] || init rust ;;
+    node) [ "$foreign" = yes ] || ls biome.json biome.jsonc .prettierrc* prettier.config.* >/dev/null 2>&1 || init node ;;
+    go)   [ "$foreign" = yes ] || init go ;;
   esac
 done
 

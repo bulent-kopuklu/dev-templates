@@ -13,7 +13,10 @@ case "$file" in
   *.c|*.cc|*.cpp|*.cxx|*.h|*.hpp)  have clang-format && clang-format -i "$file" ;;
   *.go)                            have gofmt        && gofmt -w "$file" ;;
   *.nix)                           have nixfmt       && nixfmt "$file" ;;
-  *.ts|*.tsx|*.js|*.jsx|*.json)    have biome        && biome format --write "$file" ;;
+  *.ts|*.tsx|*.js|*.jsx|*.json|*.md|*.yaml|*.yml)
+    if   ls biome.json biome.jsonc >/dev/null 2>&1;              then have biome && biome format --write "$file"
+    elif ls .prettierrc* prettier.config.* >/dev/null 2>&1;      then have npx   && npx --no-install prettier --write "$file" >/dev/null
+    fi ;;
   *.sh)                            have shfmt        && shfmt -w "$file" ;;
 esac
 exit 0
