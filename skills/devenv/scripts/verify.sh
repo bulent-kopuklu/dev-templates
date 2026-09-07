@@ -20,6 +20,9 @@ for l in $langs; do
     rust)
       out=$(cargo fetch 2>&1 && cargo check --all-targets 2>&1) && pass rust || failed rust "$(echo "$out" | grep -m3 -i 'error')" ;;
     cpp)
+      if [ ! -f CMakeLists.txt ] && ! ls compile_commands.json build/compile_commands.json >/dev/null 2>&1; then
+        failed cpp "no compile_commands.json and no CMakeLists.txt; run the project's build once under bear: bear -- <build command>"; continue
+      fi
       if [ -f CMakeLists.txt ] && [ ! -f build/compile_commands.json ]; then
         cmake -S . -B build -G Ninja >"$log" 2>&1 || { failed cpp "cmake configure: $(grep -A3 -m1 'CMake Error' "$log" | cut -c1-160)"; continue; }
       fi

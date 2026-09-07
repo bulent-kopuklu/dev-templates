@@ -92,7 +92,7 @@ let
     cpp = {
       # clang-tools first: its wrapped clangd knows the nix include paths and must shadow clang's own
       packages = [ llvm.clang-tools llvm.clang llvm.bintools llvm.lldb ]
-        ++ (with pkgs; [ gdb cmake ninja pkg-config ccache ])
+        ++ (with pkgs; [ gdb cmake ninja pkg-config ccache bear ])
         ++ map (p: p.buildPackages.clang) cross;
       shellHook = ''
         export CC="${llvm.clang}/bin/clang"

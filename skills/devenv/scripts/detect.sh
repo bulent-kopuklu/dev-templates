@@ -6,7 +6,8 @@ any() { for f in "$@"; do [ -e "$f" ] && return 0; done; return 1; }
 
 langs=()
 [ -f Cargo.toml ] && langs+=(rust)
-{ [ -f CMakeLists.txt ] || [ -f meson.build ]; } && langs+=(cpp)
+{ [ -f CMakeLists.txt ] || [ -f meson.build ] || find . -maxdepth 3 \( -path ./.git -o -path ./build \) -prune -o \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' \) -print -quit 2>/dev/null | grep -q .; } && langs+=(cpp)
+echo "build_system=$([ -f CMakeLists.txt ] && echo cmake || { [ -f meson.build ] && echo meson; } || { [ -f defne ] && echo defne; } || { [ -f Makefile ] && echo make; } || echo none)"
 [ -f go.mod ] && langs+=(go)
 [ -f package.json ] && langs+=(node)
 { [ -f pom.xml ] || any build.gradle*; } && langs+=(java)
@@ -17,7 +18,7 @@ remote=$(git remote get-url origin 2>/dev/null || true)
 echo "remote=${remote}"
 case "$remote" in
   ""|*bulent-kopuklu*|*bulentk*) echo "own=true" ;;
-  *)                             echo "own=false" ;;
+  *)                             echo "own=unknown" ;;
 esac
 
 echo "flake=$([ -f flake.nix ] && echo yes || echo no)"
