@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
-# Creates a spike repo on the Pi and a local clone wired to it.
-#   newspike <name>                 empty repo, empty clone
-#   newspike <name> <upstream-url>  fork flow: clone upstream, push it to the Pi,
-#                                   remotes: origin = pi, upstream = company
-# Needs on the laptop: git config --global url."git@mediagw.local:/mnt/wd12/workspace/".insteadOf "pi:"
+# Creates a bare spike repo on the git server and prints the commands to use it.
+# Nothing is cloned or pushed; copy the lines you want.
+#   newspike <name>                  empty repo
+#   newspike <name> <upstream-url>   also prints the fork-flow wiring (origin = server, upstream = company)
+# Needs on the laptop:
+#   git config --global url."git@git.kopuklu.io:/mnt/storage/workspace/git-repos/".insteadOf "git.kopuklu.io:"
 set -euo pipefail
-host="${PI_HOST:-dietpi@mediagw.local}"
+host="${GIT_SERVER:-dietpi@git.kopuklu.io}"
+prefix="${GIT_PREFIX:-git.kopuklu.io:}"
 name="${1:?usage: newspike <name> [upstream-url]}"
 upstream="${2:-}"
 name="${name%.git}"
-[ -e "$name" ] && { echo "exists here: $name" >&2; exit 1; }
 
 ssh "$host" newrepo "$name" >/dev/null
-echo "pi:      $name.git"
-
+url="${prefix}${name}.git"
+echo "created: $url"
+echo
 if [ -n "$upstream" ]; then
-  git clone -q "$upstream" "$name"
-  cd "$name"
-  git remote rename origin upstream
-  git remote add origin "pi:$name.git"
-  git push -q -u origin HEAD
-  echo "remotes: origin=pi, upstream=$upstream"
+  cat <<CMD
+git clone $upstream $name
+cd $name
+git remote rename origin upstream
+git remote add origin $url
+git push -u origin HEAD
+CMD
 else
-  git clone -q "pi:$name.git" "$name" 2>/dev/null || { mkdir "$name"; git -C "$name" init -q; git -C "$name" remote add origin "pi:$name.git"; }
-  echo "clone:   ./$name (origin=pi)"
+  cat <<CMD
+git clone $url
+# or wire an existing directory:
+git remote add origin $url && git push -u origin HEAD
+CMD
 fi
