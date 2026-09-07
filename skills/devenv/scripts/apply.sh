@@ -1,30 +1,29 @@
 #!/usr/bin/env bash
 # Applies dev-templates to the project in the current directory.
 #
-#   apply.sh --langs "rust cpp" [--targets "aarch64"] [--foreign] [--ref <flake-ref>]
+#   apply.sh --langs "rust cpp" [--targets "aarch64"] [--ref <flake-ref>]
 #
-# Never overwrites an existing file (nix flake init refuses). With --foreign,
-# every file this script creates is added to .git/info/exclude and only a
-# minimal .clangd is written for cpp.
+# Nothing touches the repository: every created file is listed in
+# .git/info/exclude (the user git-adds what they want later). The devshell is
+# therefore shell.nix, since a flake only sees files git tracks. Existing files
+# are never overwritten.
 set -euo pipefail
 . "$(dirname "$0")/common.sh"
 
-langs=""; targets=""; foreign=no
+langs=""; targets=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --langs)   langs="$2"; shift 2 ;;
     --targets) targets="$2"; shift 2 ;;
-    --foreign) foreign=yes; shift ;;
     --ref)     ref="$2"; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
 [ -n "$langs" ] || { echo "--langs required" >&2; exit 2; }
 
-# a flake only sees files git knows about, so an existing non-git project gets all files marked intent-to-add
-[ -d .git ] || [ "$foreign" = yes ] || { git init -q && git add -N -A && echo "created: .git (files intent-to-add)"; }
+[ -d .git ] || { git init -q && echo "created: .git"; }
 
-# nix flake init marks what it writes intent-to-add (shows as " A"); foreign mode undoes that below.
+# nix flake init marks what it writes intent-to-add; that is undone below
 snapshot() { git status --porcelain --untracked-files=all 2>/dev/null | cut -c4- | sort; }
 before=$(snapshot)
 
@@ -40,8 +39,7 @@ set_lists() {
 
 if [ -f flake.nix ] || [ -f shell.nix ]; then
   echo "kept:    $(ls flake.nix shell.nix 2>/dev/null | tr '\n' ' ')(theirs)"
-elif [ "$foreign" = yes ]; then
-  # flakes need flake.nix tracked by git; a foreign repo must not see it, so use shell.nix instead
+else
   init shell
   rev=$(nix flake metadata "$ref" --json 2>/dev/null | jq -r '.revision // empty')
   if [ -n "$rev" ]; then
@@ -50,35 +48,15 @@ elif [ "$foreign" = yes ]; then
     sed -i "s|\"github:bulent-kopuklu/dev-templates/DEV_TEMPLATES_REV\"|\"${ref}\"|" shell.nix
   fi
   set_lists shell.nix
-else
-  init base
-  set_lists flake.nix
-  sed -i "s|^  description = \"project\";|  description = \"$(basename "$PWD")\";|" flake.nix
 fi
-[ -f .envrc ] || { echo "use flake" > .envrc; echo "created: .envrc"; }
-if [ "$foreign" = no ] && [ -f .gitignore ]; then
-  for pat in .direnv/ result; do
-    grep -qxF "$pat" .gitignore || { echo "$pat" >> .gitignore; echo "updated: .gitignore (+$pat)"; }
-  done
-fi
-# nix writes flake.lock in its own JSON style; keep the project's prettier check off it
-if [ "$foreign" = no ] && any .prettierrc* prettier.config.*; then
-  for pat in flake.lock .direnv/; do
-    grep -qxF "$pat" .prettierignore 2>/dev/null || { echo "$pat" >> .prettierignore; echo "updated: .prettierignore (+$pat)"; }
-  done
-fi
+[ -f .envrc ] || { echo "use nix" > .envrc; echo "created: .envrc"; }
 
 for l in $langs; do
   case "$l" in
-    cpp)
-      if [ "$foreign" = yes ]; then
-        [ -f .clangd ] || { printf 'CompileFlags:\n  CompilationDatabase: build\n' > .clangd; echo "created: .clangd (minimal)"; }
-      else
-        init cpp
-      fi ;;
-    rust) [ "$foreign" = yes ] || [ -f .rustfmt.toml ] || init rust ;;
-    node) [ "$foreign" = yes ] || any biome.json biome.jsonc .prettierrc* prettier.config.* || init node ;;
-    go)   [ "$foreign" = yes ] || init go ;;
+    cpp)  init cpp ;;
+    rust) any .rustfmt.toml || init rust ;;
+    node) any biome.json biome.jsonc .prettierrc* prettier.config.* || init node ;;
+    go)   init go ;;
   esac
 done
 
@@ -88,14 +66,12 @@ if [ -f CLAUDE.md ] && grep -q '^# PROJECT_NAME$' CLAUDE.md; then
 fi
 chmod +x scripts/fmt.sh 2>/dev/null || true
 
-if [ "$foreign" = yes ] && [ -d .git ]; then
-  after=$(snapshot)
-  new=$(comm -13 <(echo "$before") <(echo "$after"); echo ".direnv/")
-  if [ -n "$new" ]; then
-    echo "$new" | xargs git reset -q --
-    { echo "# dev-templates (local only)"; echo "$new"; } >> .git/info/exclude
-    echo "$new" | sed 's/^/excluded: /'
-  fi
+after=$(snapshot)
+new=$(comm -13 <(echo "$before") <(echo "$after"); echo ".direnv/")
+if [ -n "$new" ]; then
+  echo "$new" | xargs git reset -q -- 2>/dev/null || true
+  { echo "# dev-templates (local only)"; echo "$new"; } >> .git/info/exclude
+  echo "$new" | sed 's/^/excluded: /'
 fi
 
 command -v direnv >/dev/null && direnv allow . && echo "direnv: allowed"

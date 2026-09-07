@@ -5,7 +5,7 @@ description: Set up a project's Nix devshell, LSP and formatter configs, and Cla
 
 # devenv
 
-Goal: after this skill, `code .` from the devshell shows no errors in the editor. Files are copied from the dev-templates flake, never written by hand. Existing files are never touched.
+Goal: after this skill, `code .` from the devshell shows no errors in the editor. Files are copied from the dev-templates flake, never written by hand. Existing files are never touched, and nothing is added to git: every created file lands in `.git/info/exclude`; the user `git add`s what they want to keep. The devshell is `shell.nix` (`use nix`), pinned to the dev-templates revision current at apply time, because a flake only sees files git tracks.
 
 Scripts: `~/.claude/skills/devenv/scripts/` (detect.sh, apply.sh, init.sh, verify.sh). Use them; do not reimplement their steps in prose.
 
@@ -13,7 +13,6 @@ Scripts: `~/.claude/skills/devenv/scripts/` (detect.sh, apply.sh, init.sh, verif
 
 Run `detect.sh` in the project root. Read every line.
 
-- `own=unknown` (the repo has a remote) → ask in the menu whether devenv files may be committed here (own) or must stay invisible to git (foreign). Foreign: added files go to `.git/info/exclude`, nothing is committed, no style files are added, `shell.nix` replaces `flake.nix`.
 - `build_system=defne|make|none` with `cpp` → there is no CMake; clangd needs a compile database the build tool does not emit. verify tells how (`bear`).
 - `langs=` is only a pre-selection for the menu, never a decision.
 
@@ -22,25 +21,21 @@ Run `detect.sh` in the project root. Read every line.
 One AskUserQuestion call with these questions, in this order. Arguments given with the command (`/devenv rust c++ arm64`) pre-select answers but the menu is still shown, so the user confirms everything in one place.
 
 1. Languages, multi-select: rust, cpp, go, node, java, android. Pre-select detected ones. Aliases: `c++`/`cxx`/`c` → cpp; `ts`/`js`/`typescript` → node; `golang` → go.
-1b. Own or foreign, whenever the repo has a remote (`own=unknown`): "own" commits devenv files, "foreign" hides them via `.git/info/exclude` and uses shell.nix. Default suggestion: own for repos under the user's or their team's control, foreign for upstream/open-source clones.
 2. Cross target, multi-select: aarch64, armv7, none. Aliases: `arm64` → aarch64; `arm`/`armv7l` → armv7. Never guess.
-3. Android, only if `android` was chosen: API level (21 default) and NDK version (23.2.8568313 default); answers go into the `android = { ... };` line of flake.nix/shell.nix via apply.sh's output file (edit that single line by hand, nothing else).
+3. Android, only if `android` was chosen: API level (21 default) and NDK version (23.2.8568313 default); answers go into the `android = { ... };` line of shell.nix (edit that single line by hand, nothing else).
 4. Go module path, only if `go` was chosen and `go.mod` does not exist.
-5. Node major version (20, 22, 24), only if `node` was chosen and neither `.nvmrc` nor `.node-version` exists. Write the answer to `.nvmrc` (e.g. `22`), then `git add -N .nvmrc` (a flake only sees files git tracks) and `direnv reload` (nix-direnv only watches flake.nix/.envrc); the devshell picks `nodejs_<major>` from it. The same applies to any new `rust-toolchain.toml`. Older projects with native modules (better-sqlite3 and friends) usually need 20 or 22.
+5. Node major version (20, 22, 24), only if `node` was chosen and neither `.nvmrc` nor `.node-version` exists. Write the answer to `.nvmrc` (e.g. `22`), add it to `.git/info/exclude`, and run `direnv reload` (nix-direnv only watches shell.nix/.envrc); the devshell picks `nodejs_<major>` from it. Older projects with native modules (better-sqlite3 and friends) usually need 20 or 22.
 
-Own vs foreign is the user's call (question 1b); detect only decides for repos without a remote.
 
 ## 3. Apply
 
 ```
-apply.sh --langs "<langs>" [--targets "<targets>"] [--foreign]
+apply.sh --langs "<langs>" [--targets "<targets>"]
 ```
 
-Creates `.git` if missing (own mode), the devshell, language dotfiles, `.claude/` with the format hook. Report the `created:` / `kept:` / `excluded:` lines verbatim.
+Creates `.git` if missing, `shell.nix` + `.envrc`, language dotfiles, `.claude/` with the format hook, and excludes all of it from git. Report the `created:` / `kept:` / `excluded:` lines verbatim.
 
-`kept: .gitignore` → append the missing template entries to the existing file. This is the only file you edit by hand.
-
-`flake_ours=no` and `flake=yes` → the project has its own devshell: leave it, still run verify inside it.
+`flake=yes` or an existing `shell.nix` → the project has its own devshell: leave it, still run verify inside it.
 
 ## 4. Init (new folder only)
 
@@ -63,13 +58,12 @@ Runs the one-time steps that otherwise leave the editor red (cmake configure wit
 - All `PASS`: done. Tell the user to open VSCode from this shell (`code .`).
 - Any `FAIL`: report the printed cause and the fix. Typical: `go.mod` wants a newer Go than nixpkgs has; `rust-toolchain.toml` lacks a cross target (add it to that file, not to flake.nix). Do not declare success.
 
-## 6. Own project finishing touches
+## 6. Finishing touches
 
-Only when `own=true`: fill CLAUDE.md "Ortam" (build/test/lint commands) and "Yerleşim" from what the project contains, keep it short; `git add` the created files; do not commit unless asked.
+Fill CLAUDE.md "Ortam" (build/test/lint commands) and "Yerleşim" from what the project contains, keep it short. Remind the user that everything is local-only and which files to `git add` if they want them in the repo.
 
 ## Never
 
 - Write flake.nix, shell.nix, .clangd, CMakeLists.txt or formatter configs by hand.
-- Change `langs`/`targets` in a flake.nix the project owned before this run.
-- Force `-std=` or `-xc++` into a foreign project's .clangd.
-- Commit in a foreign repository.
+- Change `langs`/`targets` in a flake.nix or shell.nix the project owned before this run.
+- `git add` or commit anything.
