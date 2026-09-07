@@ -13,7 +13,7 @@ Scripts: `~/.claude/skills/devenv/scripts/` (detect.sh, apply.sh, init.sh, verif
 
 Run `detect.sh` in the project root. Read every line.
 
-- `own=unknown` (remote not under the user's accounts) → ask in the menu whether this is their repo or a foreign one. Foreign: added files go to `.git/info/exclude`, nothing is committed, no style files are added, `shell.nix` replaces `flake.nix`.
+- `own=unknown` (the repo has a remote) → ask in the menu whether devenv files may be committed here (own) or must stay invisible to git (foreign). Foreign: added files go to `.git/info/exclude`, nothing is committed, no style files are added, `shell.nix` replaces `flake.nix`.
 - `build_system=defne|make|none` with `cpp` → there is no CMake; clangd needs a compile database the build tool does not emit. verify tells how (`bear`).
 - `langs=` is only a pre-selection for the menu, never a decision.
 
@@ -22,13 +22,13 @@ Run `detect.sh` in the project root. Read every line.
 One AskUserQuestion call with these questions, in this order. Arguments given with the command (`/devenv rust c++ arm64`) pre-select answers but the menu is still shown, so the user confirms everything in one place.
 
 1. Languages, multi-select: rust, cpp, go, node, java, android. Pre-select detected ones. Aliases: `c++`/`cxx`/`c` → cpp; `ts`/`js`/`typescript` → node; `golang` → go.
-1b. Own or foreign repository, only when detect said `own=unknown`.
+1b. Own or foreign, whenever the repo has a remote (`own=unknown`): "own" commits devenv files, "foreign" hides them via `.git/info/exclude` and uses shell.nix. Default suggestion: own for repos under the user's or their team's control, foreign for upstream/open-source clones.
 2. Cross target, multi-select: aarch64, armv7, none. Aliases: `arm64` → aarch64; `arm`/`armv7l` → armv7. Never guess.
 3. Android, only if `android` was chosen: API level (21 default) and NDK version (23.2.8568313 default); answers go into the `android = { ... };` line of flake.nix/shell.nix via apply.sh's output file (edit that single line by hand, nothing else).
 4. Go module path, only if `go` was chosen and `go.mod` does not exist.
 5. Node major version (20, 22, 24), only if `node` was chosen and neither `.nvmrc` nor `.node-version` exists. Write the answer to `.nvmrc` (e.g. `22`), then `git add -N .nvmrc` (a flake only sees files git tracks) and `direnv reload` (nix-direnv only watches flake.nix/.envrc); the devshell picks `nodejs_<major>` from it. The same applies to any new `rust-toolchain.toml`. Older projects with native modules (better-sqlite3 and friends) usually need 20 or 22.
 
-Own vs foreign comes from detect when the remote is recognisable; otherwise from question 1b.
+Own vs foreign is the user's call (question 1b); detect only decides for repos without a remote.
 
 ## 3. Apply
 

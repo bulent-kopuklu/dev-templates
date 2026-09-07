@@ -16,10 +16,8 @@ echo "langs=${langs[*]:-}"
 
 remote=$(git remote get-url origin 2>/dev/null || true)
 echo "remote=${remote}"
-case "$remote" in
-  ""|*bulent-kopuklu*|*bulentk*) echo "own=true" ;;
-  *)                             echo "own=unknown" ;;
-esac
+# whether devenv files may be committed is a policy only the user knows; a remote means: ask
+[ -z "$remote" ] && echo "own=true" || echo "own=unknown"
 
 echo "flake=$([ -f flake.nix ] && echo yes || echo no)"
 echo "flake_ours=$(grep -q 'dev-templates.lib.mkEnv' flake.nix 2>/dev/null && echo yes || echo no)"
