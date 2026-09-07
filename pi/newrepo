@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# Creates a bare, group-shared git repo on the git server (runs there).
+# Creates a bare, group-shared git repo on the git server (runs there) with an
+# initial commit holding README.md, so clones are not empty.
 #   newrepo <name>          -> /mnt/storage/workspace/git-repos/<name>.git
-# Runs as dietpi (passwordless sudo) and creates the repo as the git user.
+# Runs as dietpi (passwordless sudo) and does everything as the git user, or
+# clients connecting as git hit "dubious ownership".
 set -euo pipefail
 root="${GIT_ROOT:-/mnt/storage/workspace/git-repos}"
 name="${1:?usage: newrepo <name>}"
 name="${name%.git}"
 repo="$root/$name.git"
 [ -e "$repo" ] && { echo "exists: $repo" >&2; exit 1; }
-# the repo must be owned by the git user, or clients connecting as git hit "dubious ownership"
-if [ "$(id -un)" = git ]; then git init -q --bare --shared=group "$repo"
-else sudo -n -u git git init -q --bare --shared=group "$repo"; fi
+
+if [ "$(id -un)" = git ]; then as_git() { "$@"; }; else as_git() { sudo -n -u git "$@"; }; fi
+g() { as_git git -C "$repo" -c user.name=git -c user.email=git@kopuklu.io "$@"; }
+
+as_git git init -q --bare --shared=group --initial-branch=main "$repo"
+blob=$(printf '# %s\n' "$name" | g hash-object -w --stdin)
+tree=$(printf '100644 blob %s\tREADME.md\n' "$blob" | g mktree)
+commit=$(g commit-tree "$tree" -m "init")
+g update-ref refs/heads/main "$commit"
 echo "$repo"
