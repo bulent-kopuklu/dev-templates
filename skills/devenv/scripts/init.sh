@@ -34,10 +34,7 @@ for l in $langs; do
       [ -f main.go ] || printf 'package main\n\nfunc main() {}\n' > main.go ;;
     node)
       [ -f package.json ] && { echo "kept:    package.json"; continue; }
-      pnpm init >/dev/null && echo "init:    pnpm"
-      init init-node
-      pnpm add -D typescript @types/node >/dev/null && echo "init:    typescript"
-      mkdir -p src; [ -f src/index.ts ] || echo 'export {};' > src/index.ts ;;
+      bun init -y >/dev/null 2>&1 && echo "init:    bun (package.json, tsconfig.json, index.ts, bun.lock)" ;;
     android)
       [ -f cmake-android ] && { echo "kept:    cmake-android"; continue; }
       init android-native

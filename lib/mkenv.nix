@@ -114,7 +114,7 @@ let
 
     node = {
       # .nvmrc / .node-version pin the major; node-gyp needs python3 and make
-      packages = [ nodejs pkgs.pnpm pkgs.biome pkgs.python3 pkgs.gnumake ];
+      packages = [ nodejs pkgs.bun pkgs.pnpm pkgs.biome pkgs.python3 pkgs.gnumake ];
       shellHook = ''
         export NPM_CONFIG_PREFIX="''${XDG_DATA_HOME:-$HOME/.local/share}/npm"
         export NPM_CONFIG_CACHE="''${XDG_CACHE_HOME:-$HOME/.cache}/npm"

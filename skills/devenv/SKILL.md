@@ -45,7 +45,7 @@ When a chosen language has no project file (no Cargo.toml / CMakeLists.txt / go.
 direnv exec . ~/.claude/skills/devenv/scripts/init.sh --langs "<langs>" [--module <go module>]
 ```
 
-Runs the language's own generator (cargo init, go mod init, pnpm init + typescript) or a template (`init-cpp`, `android-native`). `android` implies `cpp` and usually `rust`; select them too. Never write these files yourself.
+Runs the language's own generator (cargo init, go mod init, bun init) or a template (`init-cpp`, `android-native`). `android` implies `cpp` and usually `rust`; select them too. Never write these files yourself.
 
 ## 5. Verify (green proof)
 
@@ -53,7 +53,7 @@ Runs the language's own generator (cargo init, go mod init, pnpm init + typescri
 direnv exec . ~/.claude/skills/devenv/scripts/verify.sh "<langs>"
 ```
 
-Runs the one-time steps that otherwise leave the editor red (cmake configure with compile db, cargo fetch, dependency install) then `cargo check`, `clangd --check`, `go vet`, `tsc --noEmit`.
+Runs the one-time steps that otherwise leave the editor red (cmake configure with compile db, cargo fetch, dependency install: bun by default, pnpm/npm when their lockfile exists) then `cargo check`, `clangd --check`, `go vet`, `tsc --noEmit`.
 
 - All `PASS`: done. Tell the user to open VSCode from this shell (`code .`).
 - Any `FAIL`: report the printed cause and the fix. Typical: `go.mod` wants a newer Go than nixpkgs has; `rust-toolchain.toml` lacks a cross target (add it to that file, not to flake.nix). Do not declare success.

@@ -11,7 +11,6 @@ nix flake init -t github:bulent-kopuklu/dev-templates#node    # biome.json
 nix flake init -t github:bulent-kopuklu/dev-templates#claude  # CLAUDE.md, .claude/settings.json, scripts/fmt.sh
 nix flake init -t github:bulent-kopuklu/dev-templates#shell   # shell.nix + .envrc (use nix) when flake.nix cannot be committed
 nix flake init -t github:bulent-kopuklu/dev-templates#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
-nix flake init -t github:bulent-kopuklu/dev-templates#init-node # tsconfig.json for an empty project
 ```
 
 Existing files are never overwritten. In the generated `flake.nix` edit two lines:
@@ -25,7 +24,7 @@ targets = [ "aarch64" ];    # aarch64 armv7
 Rust comes from oxalica/rust-overlay; a `rust-toolchain.toml` in `src` wins over
 the default stable toolchain (then it must list cross targets itself). Cross
 linkers are exported as `CARGO_TARGET_<TRIPLE>_LINKER`, nothing is written to
-`.cargo/config.toml`. Node follows `.nvmrc` / `.node-version` (`22` → `nodejs_22`), default is nixpkgs' `nodejs`.
+`.cargo/config.toml`. Node follows `.nvmrc` / `.node-version` (`22` → `nodejs_22`), default is nixpkgs' `nodejs`; `bun` is the default package manager for new projects, pnpm/npm are used when their lockfile exists.
 
 ## Claude Code skill
 

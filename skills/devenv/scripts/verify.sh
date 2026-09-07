@@ -36,14 +36,15 @@ for l in $langs; do
     go)
       out=$(go mod download 2>&1 && go vet ./... 2>&1) && pass go || failed go "$(echo "$out" | head -3)" ;;
     node)
-      if   [ -f pnpm-lock.yaml ]; then inst="pnpm install --frozen-lockfile"
-      elif [ -f package-lock.json ]; then inst="npm ci"
-      else inst="npm install"; fi
+      if   [ -f bun.lock ] || [ -f bun.lockb ]; then inst="bun install --frozen-lockfile"; run="bunx"
+      elif [ -f pnpm-lock.yaml ]; then inst="pnpm install --frozen-lockfile"; run="npx --no-install"
+      elif [ -f package-lock.json ]; then inst="npm ci"; run="npx --no-install"
+      else inst="bun install"; run="bunx"; fi
       $inst >"$log" 2>&1 || { failed node "$(errlines)"; continue; }
       # typecheck the way the project does: its own script, tsc -b for project references, plain tsc otherwise
-      if jq -e '.scripts.typecheck' package.json >/dev/null 2>&1; then check="npm run -s typecheck"
-      elif [ -f tsconfig.json ] && jq -e '.references' tsconfig.json >/dev/null 2>&1; then check="npx --no-install tsc -b"
-      elif [ -f tsconfig.json ]; then check="npx --no-install tsc --noEmit"
+      if jq -e '.scripts.typecheck' package.json >/dev/null 2>&1; then [ "$run" = bunx ] && check="bun run typecheck" || check="npm run -s typecheck"
+      elif [ -f tsconfig.json ] && jq -e '.references' tsconfig.json >/dev/null 2>&1; then check="$run tsc -b"
+      elif [ -f tsconfig.json ]; then check="$run tsc --noEmit"
       else check=""; fi
       if [ -z "$check" ] || $check >"$log" 2>&1; then pass node; else failed node "$(errlines)"; fi ;;
     *) pass "$l (no check)" ;;

@@ -16,7 +16,7 @@ case "$file" in
   *.nix)                           have nixfmt       && nixfmt "$file" ;;
   *.ts|*.tsx|*.js|*.jsx|*.json|*.md|*.yaml|*.yml)
     if   any biome.json biome.jsonc;          then have biome && biome format --write "$file"
-    elif any .prettierrc* prettier.config.*;  then have npx   && npx --no-install prettier --write "$file" >/dev/null
+    elif any .prettierrc* prettier.config.*;  then { have bunx && bunx prettier --write "$file" || { have npx && npx --no-install prettier --write "$file"; }; } >/dev/null
     fi ;;
   *.sh)                            have shfmt        && shfmt -w "$file" ;;
 esac
