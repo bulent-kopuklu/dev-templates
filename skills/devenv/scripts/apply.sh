@@ -60,6 +60,12 @@ if [ "$foreign" = no ] && [ -f .gitignore ]; then
     grep -qxF "$pat" .gitignore || { echo "$pat" >> .gitignore; echo "updated: .gitignore (+$pat)"; }
   done
 fi
+# nix writes flake.lock in its own JSON style; keep the project's prettier check off it
+if [ "$foreign" = no ] && any .prettierrc* prettier.config.*; then
+  for pat in flake.lock .direnv/; do
+    grep -qxF "$pat" .prettierignore 2>/dev/null || { echo "$pat" >> .prettierignore; echo "updated: .prettierignore (+$pat)"; }
+  done
+fi
 
 for l in $langs; do
   case "$l" in

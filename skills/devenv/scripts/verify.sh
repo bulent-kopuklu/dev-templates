@@ -6,6 +6,7 @@ fail=0
 log=$(mktemp)
 trap 'rm -f "$log"' EXIT
 pass() { echo "PASS $1"; }
+errlines() { local m; m=$(grep -m3 -iE 'error|ERR_' "$log" | grep -v 'A complete log' | cut -c1-160); [ -n "$m" ] && echo "$m" || tail -3 "$log"; }
 failed() { echo "FAIL $1: $2"; fail=1; }
 
 for l in $langs; do
@@ -27,10 +28,13 @@ for l in $langs; do
       if   [ -f pnpm-lock.yaml ]; then inst="pnpm install --frozen-lockfile"
       elif [ -f package-lock.json ]; then inst="npm ci"
       else inst="npm install"; fi
-      $inst >"$log" 2>&1 || { failed node "$(grep -m3 -i 'error' "$log" | grep -v 'npm error A complete log' | cut -c1-160)"; continue; }
-      if [ -f tsconfig.json ]; then
-        npx --no-install tsc --noEmit >"$log" 2>&1 && pass node || failed node "$(head -3 "$log")"
-      else pass node; fi ;;
+      $inst >"$log" 2>&1 || { failed node "$(errlines)"; continue; }
+      # typecheck the way the project does: its own script, tsc -b for project references, plain tsc otherwise
+      if jq -e '.scripts.typecheck' package.json >/dev/null 2>&1; then check="npm run -s typecheck"
+      elif [ -f tsconfig.json ] && jq -e '.references' tsconfig.json >/dev/null 2>&1; then check="npx --no-install tsc -b"
+      elif [ -f tsconfig.json ]; then check="npx --no-install tsc --noEmit"
+      else check=""; fi
+      if [ -z "$check" ] || $check >"$log" 2>&1; then pass node; else failed node "$(errlines)"; fi ;;
     *) pass "$l (no check)" ;;
   esac
 done
