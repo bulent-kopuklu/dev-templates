@@ -55,6 +55,11 @@ else
   sed -i "s|^  description = \"project\";|  description = \"$(basename "$PWD")\";|" flake.nix
 fi
 [ -f .envrc ] || { echo "use flake" > .envrc; echo "created: .envrc"; }
+if [ "$foreign" = no ] && [ -f .gitignore ]; then
+  for pat in .direnv/ result; do
+    grep -qxF "$pat" .gitignore || { echo "$pat" >> .gitignore; echo "updated: .gitignore (+$pat)"; }
+  done
+fi
 
 for l in $langs; do
   case "$l" in
@@ -65,7 +70,7 @@ for l in $langs; do
         init cpp
       fi ;;
     rust) [ "$foreign" = yes ] || [ -f .rustfmt.toml ] || init rust ;;
-    node) [ "$foreign" = yes ] || ls biome.json biome.jsonc .prettierrc* prettier.config.* >/dev/null 2>&1 || init node ;;
+    node) [ "$foreign" = yes ] || any biome.json biome.jsonc .prettierrc* prettier.config.* || init node ;;
     go)   [ "$foreign" = yes ] || init go ;;
   esac
 done

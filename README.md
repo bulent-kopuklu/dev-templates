@@ -25,7 +25,7 @@ targets = [ "aarch64" ];    # aarch64 armv7
 Rust comes from oxalica/rust-overlay; a `rust-toolchain.toml` in `src` wins over
 the default stable toolchain (then it must list cross targets itself). Cross
 linkers are exported as `CARGO_TARGET_<TRIPLE>_LINKER`, nothing is written to
-`.cargo/config.toml`.
+`.cargo/config.toml`. Node follows `.nvmrc` / `.node-version` (`22` → `nodejs_22`), default is nixpkgs' `nodejs`.
 
 ## Claude Code skill
 

@@ -3,6 +3,8 @@
 set -u
 langs="${1:?langs}"
 fail=0
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
 pass() { echo "PASS $1"; }
 failed() { echo "FAIL $1: $2"; fail=1; }
 
@@ -25,9 +27,9 @@ for l in $langs; do
       if   [ -f pnpm-lock.yaml ]; then inst="pnpm install --frozen-lockfile"
       elif [ -f package-lock.json ]; then inst="npm ci"
       else inst="npm install"; fi
-      out=$($inst 2>&1) || { failed node "$(echo "$out" | tail -3)"; continue; }
+      $inst >"$log" 2>&1 || { failed node "$(grep -m3 -i 'error' "$log" | grep -v 'npm error A complete log' | cut -c1-160)"; continue; }
       if [ -f tsconfig.json ]; then
-        out=$(npx tsc --noEmit 2>&1) && pass node || failed node "$(echo "$out" | head -3)"
+        npx --no-install tsc --noEmit >"$log" 2>&1 && pass node || failed node "$(head -3 "$log")"
       else pass node; fi ;;
     *) pass "$l (no check)" ;;
   esac

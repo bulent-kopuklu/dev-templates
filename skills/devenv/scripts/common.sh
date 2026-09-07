@@ -1,4 +1,5 @@
 # shared by apply.sh and init.sh
+any() { for f in "$@"; do [ -e "$f" ] && return 0; done; return 1; }
 ref="${DEV_TEMPLATES_REF:-github:bulent-kopuklu/dev-templates}"
 
 # nix flake init exits 1 when any file already exists; the rest is still written.

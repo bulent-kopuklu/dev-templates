@@ -7,6 +7,7 @@ file=$(jq -r '.tool_input.file_path // empty' 2>/dev/null) || exit 0
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 
 have() { command -v "$1" >/dev/null 2>&1; }
+any()  { for f in "$@"; do [ -e "$f" ] && return 0; done; return 1; }
 
 case "$file" in
   *.rs)                            have rustfmt      && rustfmt --edition 2024 "$file" ;;
@@ -14,8 +15,8 @@ case "$file" in
   *.go)                            have gofmt        && gofmt -w "$file" ;;
   *.nix)                           have nixfmt       && nixfmt "$file" ;;
   *.ts|*.tsx|*.js|*.jsx|*.json|*.md|*.yaml|*.yml)
-    if   ls biome.json biome.jsonc >/dev/null 2>&1;              then have biome && biome format --write "$file"
-    elif ls .prettierrc* prettier.config.* >/dev/null 2>&1;      then have npx   && npx --no-install prettier --write "$file" >/dev/null
+    if   any biome.json biome.jsonc;          then have biome && biome format --write "$file"
+    elif any .prettierrc* prettier.config.*;  then have npx   && npx --no-install prettier --write "$file" >/dev/null
     fi ;;
   *.sh)                            have shfmt        && shfmt -w "$file" ;;
 esac

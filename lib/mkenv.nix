@@ -60,6 +60,13 @@ let
     };
 
   llvm = pkgs.llvmPackages;
+
+  nodeVersionFile = lib.findFirst (f: src != null && builtins.pathExists (src + "/${f}")) null [ ".nvmrc" ".node-version" ];
+  nodeMajor =
+    if nodeVersionFile == null then null
+    else builtins.head (builtins.match "v?([0-9]+).*" (lib.trim (builtins.readFile (src + "/${nodeVersionFile}"))));
+  nodejs = if nodeMajor == null then pkgs.nodejs
+    else pkgs."nodejs_${nodeMajor}" or (throw "dev-templates: nixpkgs has no nodejs_${nodeMajor} (from ${nodeVersionFile})");
   jdk = pkgs.jdk21;
 
   androidPkgs = import pkgs.path {
@@ -104,7 +111,8 @@ let
     };
 
     node = {
-      packages = with pkgs; [ nodejs pnpm biome ];
+      # .nvmrc / .node-version pin the major; node-gyp needs python3 and make
+      packages = [ nodejs pkgs.pnpm pkgs.biome pkgs.python3 pkgs.gnumake ];
       shellHook = ''
         export NPM_CONFIG_PREFIX="''${XDG_DATA_HOME:-$HOME/.local/share}/npm"
         export NPM_CONFIG_CACHE="''${XDG_CACHE_HOME:-$HOME/.cache}/npm"
