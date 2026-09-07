@@ -15,6 +15,7 @@ if [ "$(id -un)" = git ]; then as_git() { "$@"; }; else as_git() { sudo -n -u gi
 g() { as_git git -C "$repo" -c user.name=git -c user.email=git@kopuklu.io "$@"; }
 
 as_git git init -q --bare --shared=group --initial-branch=main "$repo"
+g config receive.denyNonFastForwards false   # --shared turns it on; spike repos must accept force pushes
 blob=$(printf '# %s\n' "$name" | g hash-object -w --stdin)
 tree=$(printf '100644 blob %s\tREADME.md\n' "$blob" | g mktree)
 commit=$(g commit-tree "$tree" -m "init")
