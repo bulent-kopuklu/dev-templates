@@ -92,8 +92,11 @@ Bulgu, geçti/kaldı kararı ve karta yazılan metin **gitmez**: yerel modelin
 
 Sınırları ezberden uygulama, **wiki'den oku**: `docs/llm/INDEX.md`. Orada hangi
 işin devredilebileceği, girdinin ne kadarında modelin sessizce yanlış cevap
-vermeye başladığı ve sunucunun nasıl çalıştırıldığı yazılı. Sunucuyu kendi
-kararınla başlatma.
+vermeye başladığı ve sunucunun nasıl çalıştırıldığı yazılı.
+
+Kullanmak için **izin isteme**. Önce sunucunun durumuna bak: çalışıyorsa
+kullan, çalışmıyorsa başlat. İş bitince **yalnız sen başlattıysan** durdur —
+zaten çalışıyorduysa dokunma, başkası kullanıyor olabilir.
 
 ## Kayıt — wiki'ye, projeye değil
 
