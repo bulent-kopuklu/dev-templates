@@ -141,6 +141,29 @@ Kayıt varsa ve bayat değilse spike açma, ona bağlan.
 - **Geçerlilik** — ortam ya da sürüm değişirse bu kart **bayat**tır ve yeniden
   koşulmadan kullanılamaz
 
+## Kurulum bilgisi araç başına birikir
+
+`setup.sh` *nasıl* kurulduğunu taşır ama *neden* öyle kurulduğunu ve nerede
+tökezlendiğini taşımaz. Kurulum çoğu zaman spike'ın kendisinden uzun sürer, ve
+o süre tamamen yeniden keşfe gider: hangi sürüm indirilir, hangi ayar hangi
+hatayı çözer, neyin yanlış olduğu nasıl anlaşılır.
+
+Bu yüzden kurulum bilgisi wiki'ye **araç başına bir belge** olarak yazılır ve
+spike'tan spike'a birikir:
+
+- Nereden indirildiği ve **hangi sürüm**
+- Kurulum adımları, koşulabilir hâliyle
+- Yapılan her ayar ve **neden yapıldığı** — gerekçesiz ayar, sonraki okuyucunun
+  silmeye cesaret edemediği ayardır
+- **Alınan hatalar ve doğrusu**: ne denendi, ne patladı, çözüm neydi
+
+Aynı aracı kullanan ikinci bir spike **yeni belge açmaz**, o belgeye ekler:
+farklı bir ayar denediyse onu, yeni bir tuzağa düştüyse onu. Bir araç hakkında
+bilinen her şey tek yerde toplanır.
+
+Belgeyi açarken ve indeksi tazelerken wiki'nin kendi araçlarını kullan; kuralları
+ve araçları wiki'nin `README`'sindedir.
+
 ## Bittiğinde
 
 - Karar, karta **bağlanır**. Bağlanmayan karar gerekçesizdir.
