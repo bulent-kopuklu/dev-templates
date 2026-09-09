@@ -37,14 +37,14 @@ be green. Install once (symlinks into `~/.claude/skills`, so `git pull` updates 
 ./install.sh
 ```
 
-## Spike repos on the git server
+## Repos on the git server
 
-`pi/newrepo` lives on the server (`/usr/local/bin/newrepo`), `bin/newspike` runs on the laptop
-(installed by `install.sh` into `~/.local/bin`). `newspike` creates the bare repo and only
-prints the clone / fork-flow commands:
+`pi/newrepo` lives on the server (`/usr/local/bin/newrepo`), `bin/newrepo` runs on the laptop
+(installed by `install.sh` into `~/.local/bin`) and calls it over ssh. The laptop side creates
+the bare repo and only prints the clone / fork-flow commands:
 
 ```bash
 git config --global url."git@git.kopuklu.io:/mnt/storage/workspace/git-repos/".insteadOf "git.kopuklu.io:"
-newspike nats-bridge                               # empty spike
-newspike nats-bridge git@gitlab:grup/repo.git      # prints fork-flow wiring: origin = server, upstream = company
+newrepo nats-bridge                               # empty repo
+newrepo nats-bridge git@gitlab:grup/repo.git      # prints fork-flow wiring: origin = server, upstream = company
 ```

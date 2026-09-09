@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Creates a bare spike repo on the git server and prints the commands to use it.
+# Creates a bare repo on the git server and prints the commands to use it.
 # Nothing is cloned or pushed; copy the lines you want.
-#   newspike <name>                  empty repo
-#   newspike <name> <upstream-url>   also prints the fork-flow wiring (origin = server, upstream = company)
+#   newrepo <name>                   empty repo
+#   newrepo <name> <upstream-url>    also prints the fork-flow wiring (origin = server, upstream = company)
 # Needs on the laptop:
 #   git config --global url."git@git.kopuklu.io:/mnt/storage/workspace/git-repos/".insteadOf "git.kopuklu.io:"
 set -euo pipefail
 host="${GIT_SERVER:-dietpi@git.kopuklu.io}"
 prefix="${GIT_PREFIX:-git.kopuklu.io:}"
-name="${1:?usage: newspike <name> [upstream-url]}"
+name="${1:?usage: newrepo <name> [upstream-url]}"
 upstream="${2:-}"
 name="${name%.git}"
 
