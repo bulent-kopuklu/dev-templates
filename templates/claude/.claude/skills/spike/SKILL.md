@@ -80,6 +80,21 @@ başlangıç durumu da dahildir — bozuk bir düzenekte başlayan koşu, ölçt
 değil düzeneğini raporlar. Bir önceki koşudan kalan artık da düzeneğin
 parçasıdır: her koşu temiz başladığını göstermeli.
 
+## Büyük çıktıyı yerel modele ele
+
+Kurulum ve ölçüm log'ları büyüktür, gürültülüdür ve çoğu satırı işe yaramaz.
+Hata satırını bulmak, tekrarlayan arızaları gruplamak, bir çıktının beklenen
+şekle uyup uymadığını kabaca elemek — bunlar girdisi büyük, çıktısı iç kullanım
+olan işlerdir ve yerel modele gider.
+
+Bulgu, geçti/kaldı kararı ve karta yazılan metin **gitmez**: yerel modelin
+ürettiği bir iddia kanıt değildir, ve ölçülmüş sınırları var.
+
+Sınırları ezberden uygulama, **wiki'den oku**: `docs/llm/INDEX.md`. Orada hangi
+işin devredilebileceği, girdinin ne kadarında modelin sessizce yanlış cevap
+vermeye başladığı ve sunucunun nasıl çalıştırıldığı yazılı. Sunucuyu kendi
+kararınla başlatma.
+
 ## Kayıt — wiki'ye, projeye değil
 
 Spike'ın bulgusu projeye ait değildir: aynı araç başka bir projede de sorulur.
