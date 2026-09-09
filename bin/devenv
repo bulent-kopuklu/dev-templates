@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""devenv - dev-templates devshell and config files for the project in the current directory.
+
+    devenv rust cpp --target aarch64
+    devenv node --node 22
+    devenv go --speckit
+
+Copies the templates and builds the devshell so the runtimes are on disk. It
+creates no project files and reads no project tree: languages are what you name.
+Nothing is committed - created files land in .git/info/exclude, except flake.nix,
+which is intent-to-added because nix reads only files git knows about.
+"""
+import argparse, os, shutil, subprocess, sys, tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMPLATES = ROOT / "templates"
+REF = os.environ.get("DEV_TEMPLATES_REF", "github:bulent-kopuklu/dev-templates")
+LANGS = ["rust", "cpp", "go", "node", "java", "android"]
+ALIAS = {"c++": "cpp", "cxx": "cpp", "c": "cpp", "ts": "node", "js": "node",
+         "typescript": "node", "golang": "go", "arm64": "aarch64", "arm": "armv7", "armv7l": "armv7"}
+
+#: Companion'in release zip'i build toolchain'ini (build-pipeline.py, nodes/,
+#: fragments/) gondermiyor ve onlarsiz pipeline ozellestirilemez; bu yuzden
+#: extension'lar klondan, `--dev` ile kurulur.
+#: Dile ozgu AI kurallari. Secilen her dil icin `<dil>.md` aranir; varsa
+#: `.claude/rules/` altina KOPYALANIR ve CLAUDE.md oradan import eder. Proje
+#: disina link verilmez: agac kendi kendine yeter.
+AI_RULES = Path(os.environ.get("AI_RULES", "~/workspace/ai-rules")).expanduser()
+COMPANION = os.environ.get("SPECKIT_COMPANION", "https://github.com/alfredoperez/speckit-companion")
+ORCHESTRATION = os.environ.get("SPECKIT_ORCHESTRATION", "")
+
+created = []
+
+
+def copy(template):
+    for f in sorted(p for p in (TEMPLATES / template).rglob("*") if p.is_file()):
+        rel = f.relative_to(TEMPLATES / template)
+        if rel.exists():
+            print(f"kept:    {rel}")
+        else:
+            rel.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f, rel)
+            created.append(str(rel))
+            print(f"created: {rel}")
+
+
+def edit(path, subs):
+    p = Path(path)
+    p.write_text(subs(p.read_text()))
+
+
+def nix_list(name, values):
+    return f'  {name} = [ ' + "".join(f'"{v}" ' for v in values) + '];'
+
+
+def run(*cmd):
+    if subprocess.run(cmd).returncode != 0:
+        sys.exit(f"basarisiz: {' '.join(cmd)}")
+
+
+def add_extension(source):
+    """Extension'i yerel bir dizinden kurar; kaynak URL ise once klonlar.
+
+    Extension'in kokunu `extension.yml` belirler, deponun koku degil: bazi
+    depolar onu bir alt dizinde tutuyor (companion `speckit-extension/`'da).
+    """
+    src, tmp = Path(source).expanduser(), None
+    if not src.is_dir():
+        tmp = Path(tempfile.mkdtemp(prefix="speckit-ext-"))
+        run("git", "clone", "--depth", "1", "-q", source, str(tmp))
+        src = tmp
+    if not (src / "extension.yml").is_file():
+        # Depoda birden fazla `extension.yml` olabilir: kurulu bir kopya
+        # (`.specify/extensions/*`), ornekler, test verileri. Bunlar elenir ve
+        # kalanlardan koke en yakini alinir; iki aday ayni derinlikteyse
+        # secilmez, cunku yanlis extension sessizce kurulur.
+        noise = {".git", ".specify", "examples", "test", "tests", "fixtures", "node_modules"}
+        hits = [h for h in src.rglob("extension.yml") if not noise & set(h.parts)]
+        hits.sort(key=lambda h: len(h.parts))
+        if not hits:
+            sys.exit(f"extension.yml bulunamadi: {source}")
+        if len(hits) > 1 and len(hits[0].parts) == len(hits[1].parts):
+            sys.exit("birden fazla extension koku: "
+                     + ", ".join(str(h.parent.relative_to(src)) for h in hits))
+        src = hits[0].parent
+    run("specify", "extension", "add", str(src), "--dev", "--force")
+    print(f"extension: {src.name} <- {source}")
+    if tmp:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def speckit():
+    """Spec Kit'i bu projeye kurar: CLI guncel, init, extension'lar, anayasa.
+
+    Sira onemli. `init` .specify/ agacini yaratir; extension'lar ona yazar;
+    anayasa en sona kalir cunku init kendi sablonunu birakiyor ve bizimki onun
+    yerine gecmeli.
+    """
+    if not shutil.which("specify"):
+        sys.exit("specify yok: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git")
+    run("specify", "self", "upgrade")
+    run("specify", "init", "--here", "--force", "--non-interactive",
+        "--script", "sh", "--integration", "claude")
+    add_extension(COMPANION)
+    if ORCHESTRATION:
+        add_extension(ORCHESTRATION)
+    else:
+        print("atlandi: orchestration (SPECKIT_ORCHESTRATION verilmedi)")
+
+    src = TEMPLATES / "speckit" / "constitution.md"
+    dst = Path(".specify/memory/constitution.md")
+    if not src.is_file():
+        print(f"atlandi: anayasa ({src} yok)")
+    else:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        print(f"created: {dst} (generic anayasa)")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="dev-templates devshell for this project")
+    ap.add_argument("langs", nargs="+", help=" | ".join(LANGS))
+    ap.add_argument("--target", action="append", default=[], help="aarch64 | armv7 (repeatable)")
+    ap.add_argument("--node", help="node major for .nvmrc, e.g. 22")
+    ap.add_argument("--speckit", action="store_true",
+                    help="Spec Kit kur: self upgrade, init, companion + orchestration, generic anayasa")
+    a = ap.parse_args()
+
+    langs = [ALIAS.get(l.lower(), l.lower()) for l in a.langs]
+    unknown = [l for l in langs if l not in LANGS]
+    if unknown:
+        sys.exit(f"unknown language: {' '.join(unknown)} (pick from {' '.join(LANGS)})")
+    targets = [ALIAS.get(t.lower(), t.lower()) for t in a.target if t.lower() != "none"]
+
+    if not Path(".git").is_dir():
+        subprocess.run(["git", "init", "-q"], check=True)
+        print("created: .git")
+
+    if Path("flake.nix").exists() or Path("shell.nix").exists():
+        print("kept:    flake.nix/shell.nix (theirs)")
+    else:
+        copy("base")
+        edit("flake.nix", lambda t: t
+             .replace('dev-templates.url = "github:bulent-kopuklu/dev-templates";',
+                      f'dev-templates.url = "{REF}";')
+             .replace('  langs = [ ];', nix_list("langs", langs))
+             .replace('  targets = [ ];', nix_list("targets", targets) if targets else '  targets = [ ];'))
+        subprocess.run(["git", "add", "-N", "flake.nix"], check=True)
+        print("git:     flake.nix intent-to-added so nix can read it; git add it to keep it")
+
+    if not Path(".envrc").exists():
+        Path(".envrc").write_text("use flake\n")
+        created.append(".envrc")
+        print("created: .envrc")
+
+    if a.node and not any(Path(f).exists() for f in (".nvmrc", ".node-version")):
+        Path(".nvmrc").write_text(f"{a.node}\n")
+        subprocess.run(["git", "add", "-N", ".nvmrc"], check=True)
+        print(f"git:     .nvmrc ({a.node}) intent-to-added; the flake reads only what git knows")
+
+    for l in langs:
+        if l == "cpp":
+            copy("cpp")
+        elif l == "rust" and not Path(".rustfmt.toml").exists():
+            copy("rust")
+        elif l == "go":
+            copy("go")
+        elif l == "node" and not any(Path(".").glob(g) for g in ("biome.json*", ".prettierrc*", "prettier.config.*")):
+            copy("node")
+    copy("claude")
+    if Path("CLAUDE.md").exists():
+        edit("CLAUDE.md", lambda t: t.replace("# PROJECT_NAME", f"# {Path.cwd().name}"))
+        body = Path("CLAUDE.md").read_text()
+        imports = []
+        for l in langs:
+            src = AI_RULES / f"{l}.md"
+            if not src.is_file():
+                continue
+            dst = Path(".claude/rules") / f"{l}.md"
+            if dst.exists():
+                print(f"kept:    {dst}")
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                created.append(str(dst))
+                print(f"created: {dst}")
+            if f"@{dst}" not in body:
+                imports.append(f"- @{dst}\n")
+        if imports:
+            edit("CLAUDE.md", lambda t: t.replace(
+                "- Formatlama `PostToolUse` hook",
+                "".join(imports) + "- Formatlama `PostToolUse` hook"))
+            print(f"claude:  {len(imports)} kural dosyasi import edildi")
+    if Path("scripts/fmt.sh").exists():
+        Path("scripts/fmt.sh").chmod(0o755)
+
+    already = Path(".git/info/exclude").read_text().splitlines()
+    excluded = [f for f in created + [".direnv/"] if f != "flake.nix" and f not in already]
+    if excluded:
+        with open(".git/info/exclude", "a") as f:
+            f.write("# dev-templates (local only)\n" + "\n".join(excluded) + "\n")
+        for e in excluded:
+            print(f"excluded: {e}")
+
+    if a.speckit:
+        speckit()
+
+    if shutil.which("direnv"):
+        subprocess.run(["direnv", "allow", "."], check=True)
+        print("direnv:  allowed")
+    print("building the devshell (runtimes, LSPs, formatters) ...")
+    build = subprocess.run(["nix", "develop", "--command", "true"])
+    if build.returncode != 0:
+        sys.exit("devshell failed to build; the nix error is above")
+    print("ready. open the editor from this shell: code .")
+
+
+if __name__ == "__main__":
+    main()
