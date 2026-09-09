@@ -39,9 +39,10 @@ be green. Install once (symlinks into `~/.claude/skills`, so `git pull` updates 
 
 ## Repos on the git server
 
-`pi/newrepo` lives on the server (`/usr/local/bin/newrepo`), `bin/newrepo` runs on the laptop
-(installed by `install.sh` into `~/.local/bin`) and calls it over ssh. The laptop side creates
-the bare repo and only prints the clone / fork-flow commands:
+`pi/newrepo` runs on the server, `bin/newrepo` runs on the laptop and calls it over ssh.
+`install.sh` copies both into place: the laptop side into `~/.local/bin`, the server side to
+`dietpi@mediagw.local:/home/dietpi/.local/bin` over scp (`NO_PI=1` skips it). The laptop side
+creates the bare repo and only prints the clone / fork-flow commands:
 
 ```bash
 git config --global url."git@git.kopuklu.io:/mnt/storage/workspace/git-repos/".insteadOf "git.kopuklu.io:"
