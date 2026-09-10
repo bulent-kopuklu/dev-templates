@@ -112,7 +112,7 @@ def speckit():
         sys.exit("specify yok: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git")
     run("specify", "self", "upgrade")
     run("specify", "init", "--here", "--force", "--non-interactive",
-        "--script", "sh", "--integration", "claude")
+        "--script", "sh", "--integration", "claude", "--extension", "git")
     add_extension(COMPANION)
     if ORCHESTRATION:
         add_extension(ORCHESTRATION)
@@ -145,6 +145,41 @@ def speckit():
             print(f"atlandi: orchestration workflow ({wf} yok)")
         stop_hook()
     node_replacement()
+    git_hooks()
+
+
+def git_hooks():
+    """Git extension'inin yalniz spec basina branch acan hook'unu birakir.
+
+    Geri kalan hook'lari `speckit.git.commit` ve hepsi optional. Companion
+    optional bir hook'u calistirmaz, "commit edeyim mi?" diye basar; insansiz
+    kosuda bu bir bekleme noktasidir. git-config.yml'de auto_commit acilsa da
+    sabit "[Spec Kit] ..." mesajiyla commit atar, Conventional Commits'e
+    uymaz. `enabled: false` olan hook'u Companion sessizce atlar.
+    """
+    p = Path(".specify/extensions.yml")
+    if not p.is_file():
+        print(f"atlandi: git hook ayari ({p} yok)")
+        return
+    satirlar = p.read_text().splitlines(keepends=True)
+    cikti, kapanan, i = [], 0, 0
+    while i < len(satirlar):
+        if satirlar[i].rstrip() != "  - extension: git":
+            cikti.append(satirlar[i])
+            i += 1
+            continue
+        j = next((k for k in range(i + 1, len(satirlar)) if not satirlar[k].startswith("    ")), len(satirlar))
+        girdi = satirlar[i:j]
+        if "    optional: true\n" in girdi:
+            girdi = ["    enabled: false\n" if s == "    enabled: true\n" else s for s in girdi]
+            kapanan += 1
+        cikti += girdi
+        i = j
+    if not kapanan:
+        print(f"UYARI:   {p} icinde kapatilacak git hook'u bulunamadi; bicim degismis olabilir")
+        return
+    p.write_text("".join(cikti))
+    print(f"edited:  {p} ({kapanan} git commit hook'u kapatildi; branch hook'u acik)")
 
 
 def node_replacement():
@@ -203,7 +238,7 @@ def main():
     ap.add_argument("--target", action="append", default=[], help="aarch64 | armv7 (repeatable)")
     ap.add_argument("--node", help="node major for .nvmrc, e.g. 22")
     ap.add_argument("--speckit", action="store_true",
-                    help="Spec Kit kur: self upgrade, init, companion + orchestration, generic anayasa")
+                    help="Spec Kit kur: self upgrade, init + git (spec basina branch), companion + orchestration, generic anayasa")
     a = ap.parse_args()
 
     langs = [ALIAS.get(l.lower(), l.lower()) for l in a.langs]
