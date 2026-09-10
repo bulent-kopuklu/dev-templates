@@ -14,6 +14,10 @@ nix flake init -t github:bulent-kopuklu/dev-templates#shell   # shell.nix + .env
 nix flake init -t github:bulent-kopuklu/dev-templates#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
 ```
 
+Language rules for the agent live in `templates/rules/<lang>.md`. For every
+language it is given, `devenv` copies the matching file to the project's
+`.claude/rules/` and imports it from the project's `CLAUDE.md`.
+
 Existing files are never overwritten. In the generated `flake.nix` edit two lines:
 
 ```nix

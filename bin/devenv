@@ -30,10 +30,10 @@ ALIAS = {"c++": "cpp", "cxx": "cpp", "c": "cpp", "ts": "node", "js": "node",
 #: Companion'in release zip'i build toolchain'ini (build-pipeline.py, nodes/,
 #: fragments/) gondermiyor ve onlarsiz pipeline ozellestirilemez; bu yuzden
 #: extension'lar klondan, `--dev` ile kurulur.
-#: Dile ozgu AI kurallari. Secilen her dil icin `<dil>.md` aranir; varsa
-#: `.claude/rules/` altina KOPYALANIR ve CLAUDE.md oradan import eder. Proje
-#: disina link verilmez: agac kendi kendine yeter.
-AI_RULES = Path(os.environ.get("AI_RULES", "~/workspace/ai-rules")).expanduser()
+#: Dile ozgu AI kurallari. Secilen her dil icin `templates/rules/<dil>.md`
+#: aranir; varsa `.claude/rules/` altina KOPYALANIR ve CLAUDE.md oradan import
+#: eder. Proje disina link verilmez: agac kendi kendine yeter.
+AI_RULES = TEMPLATES / "rules"
 COMPANION = os.environ.get("SPECKIT_COMPANION", "https://github.com/alfredoperez/speckit-companion")
 ORCHESTRATION = os.environ.get("SPECKIT_ORCHESTRATION", "")
 
