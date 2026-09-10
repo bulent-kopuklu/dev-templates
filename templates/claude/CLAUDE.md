@@ -18,8 +18,10 @@
 - Yeni bileşen = `components/` altında yeni dizin. `Makefile`'a dokunulmaz;
   bileşenin dilini manifest'inden okur.
 - Kökte yalnız projenin geneline ait olan durur: `Makefile`, `flake.nix`,
-  formatter/linter config'leri, `CLAUDE.md`, `README.md`. Kök dizine kaynak kodu
-  ya da yeni dizin eklenmez.
+  formatter/linter config'leri, `CLAUDE.md`, `README.md`. Spec Kit kullanılıyorsa
+  onun yerleri de: `specs/`, `.specify/`, living specs'in `living-specs.yml`'ı ve
+  `capabilities/`'i. Kök dizine kaynak kodu ya da bunların dışında yeni dizin
+  eklenmez.
 - Bileşenler arası sözleşme (proto, OpenAPI) onu sunan bileşenin içinde durur.
 - Build çıktısı `build/<target>/<variant>/`, release çıktısı `dist/<target>/`.
 
