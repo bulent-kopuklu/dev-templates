@@ -16,6 +16,5 @@
 ## Kurallar
 
 - `~/.claude/CLAUDE.md` içindeki global kurallar burada da geçerli; bu dosya yalnızca projeye özel olanları taşır.
-- Formatlama `PostToolUse` hook'u ile otomatik (`scripts/fmt.sh`). Elle formatlama komutu çalıştırma.
 
 <!-- /init çıktısını bu satırın altına ekle; yukarıdaki bölümleri koru. -->

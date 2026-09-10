@@ -8,7 +8,7 @@ nix flake init -t github:bulent-kopuklu/dev-templates#cpp     # .clangd, .clang-
 nix flake init -t github:bulent-kopuklu/dev-templates#rust    # rustfmt.toml
 nix flake init -t github:bulent-kopuklu/dev-templates#go      # .golangci.yml
 nix flake init -t github:bulent-kopuklu/dev-templates#node    # biome.json
-nix flake init -t github:bulent-kopuklu/dev-templates#claude  # CLAUDE.md, .claude/settings.json, scripts/fmt.sh
+nix flake init -t github:bulent-kopuklu/dev-templates#claude  # CLAUDE.md, .claude/rules/, .claude/skills/
 nix flake init -t github:bulent-kopuklu/dev-templates#shell   # shell.nix + .envrc (use nix) when flake.nix cannot be committed
 nix flake init -t github:bulent-kopuklu/dev-templates#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
 ```

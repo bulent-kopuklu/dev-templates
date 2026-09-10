@@ -258,12 +258,17 @@ def main():
             if f"@{dst}" not in body:
                 imports.append(f"- @{dst}\n")
         if imports:
-            edit("CLAUDE.md", lambda t: t.replace(
-                "- Formatlama `PostToolUse` hook",
-                "".join(imports) + "- Formatlama `PostToolUse` hook"))
+            # Capa: sablonun Kurallar bolumundeki global-kurallar maddesi.
+            # Import'lar onun ALTINA girer. Capa sablondan kalkarsa import'lar
+            # sessizce yazilmaz; o yuzden ikisi birlikte degisir.
+            capa = "- `~/.claude/CLAUDE.md` i"
+            def ekle(metin):
+                for satir in metin.splitlines(keepends=True):
+                    if satir.startswith(capa):
+                        return metin.replace(satir, satir + "".join(imports), 1)
+                sys.exit(f"CLAUDE.md'de capa bulunamadi: {capa!r}")
+            edit("CLAUDE.md", ekle)
             print(f"claude:  {len(imports)} kural dosyasi import edildi")
-    if Path("scripts/fmt.sh").exists():
-        Path("scripts/fmt.sh").chmod(0o755)
 
     already = Path(".git/info/exclude").read_text().splitlines()
     excluded = [f for f in created + [".direnv/"] if f != "flake.nix" and f not in already]
