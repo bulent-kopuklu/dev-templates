@@ -10,7 +10,7 @@ creates no project files and reads no project tree: languages are what you name.
 Nothing is committed - created files land in .git/info/exclude, except flake.nix,
 which is intent-to-added because nix reads only files git knows about.
 """
-import argparse, os, shutil, subprocess, sys, tempfile
+import argparse, json, os, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -115,7 +115,67 @@ def speckit():
     else:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-        print(f"created: {dst} (generic anayasa)")
+        print(f"created: {dst} (cekirdek anayasa; urune ozel ilkeleri sen eklersin)")
+
+    # Companion kendi workflow'unu extension agacina birakiyor ama KURMUYOR;
+    # kurulmadan `specify workflow run speckit-companion` calismaz ve stock
+    # workflow companion komutlarini degil `speckit.*` komutlarini cagirir.
+    wf = Path(".specify/extensions/companion/workflows/speckit-companion.workflow.yml")
+    if wf.is_file():
+        run("specify", "workflow", "add", str(wf))
+    else:
+        print(f"atlandi: companion workflow ({wf} yok)")
+
+    if ORCHESTRATION:
+        node_replacement()
+        stop_hook()
+
+
+def node_replacement():
+    """Orchestration'in implement govdesini Companion'in node'unun yerine koyar.
+
+    Extension `provides:` yalnizca commands/templates/scripts aliyor, yani bir
+    extension proje overlay'ine (`.specify/companion/nodes/`) yazamaz. Kopyayi
+    burasi atar. Replacement hala bir node'dur: id'sini, phase'ini ve `reads:`
+    alanini korur, ona takili hook'lar fire etmeye devam eder. Geri almak icin
+    dosyayi silmek yeter.
+    """
+    src = Path(".specify/extensions/orchestration/nodes/implement/implement-exec.md")
+    if not src.is_file():
+        print(f"atlandi: node replacement ({src} yok)")
+        return
+    dst = Path(".specify/companion/nodes/implement/implement-exec.md")
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+    print(f"created: {dst} (implement govdesi orchestration'dan)")
+    build = Path(".specify/extensions/companion/scripts/build-pipeline.py")
+    if build.is_file():
+        run("python3", str(build))
+    else:
+        print(f"atlandi: pipeline build ({build} yok) — replacement govdeye islenmedi")
+
+
+def stop_hook():
+    """Ajan durdugunda bitmemis isin kaydini yazan hook'u settings.json'a ekler.
+
+    Spec Kit extension'i bunu yapamaz: `.claude/settings.json` ajanin ayari,
+    `.specify/` degil. Hook bloke ETMEZ, yalnizca yazar — cikis kodu her yolda
+    0. Exit 2 durmayi engelliyor (olculdu) ama engellenen ajan kapiyi gecmek
+    icin uydurma kayit uretebilir.
+    """
+    p = Path(".claude/settings.json")
+    cfg = json.loads(p.read_text()) if p.is_file() else {}
+    cmd = "$CLAUDE_PROJECT_DIR/.specify/extensions/orchestration/scripts/stop_guard.py"
+    hooks = cfg.setdefault("hooks", {})
+    varsa = any(h.get("command") == cmd
+                for girdi in hooks.get("Stop", []) for h in girdi.get("hooks", []))
+    if varsa:
+        print(f"kept:    {p} (Stop hook zaten var)")
+        return
+    hooks.setdefault("Stop", []).append({"hooks": [{"type": "command", "command": cmd}]})
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(cfg, indent=2) + "\n")
+    print(f"created: {p} (Stop hook: bitmemis isin kaydi)")
 
 
 def main():
