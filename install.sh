@@ -21,6 +21,14 @@ for tool in "$here"/bin/*; do
   echo "kopyalandi: $bindest/$(basename "$tool")"
 done
 
+# Sablonlar: devenv onlari kurulu halde buradan okur. Aynalama (once sil, sonra
+# kopyala) cunku depodan kaldirilan bir sablon kurulumda kalmamali.
+share="${XDG_DATA_HOME:-$HOME/.local/share}/dev-templates"
+rm -rf "$share/templates"
+mkdir -p "$share"
+cp -r "$here/templates" "$share/templates"
+echo "kopyalandi: $share/templates"
+
 # Global CLAUDE.md burada duruyor cunku config dizini bir depo degil.
 rm -f "$config/CLAUDE.md"
 install -m 644 "$here/claude/CLAUDE.md" "$config/CLAUDE.md"

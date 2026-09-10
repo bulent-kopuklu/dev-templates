@@ -14,7 +14,13 @@ import argparse, json, os, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TEMPLATES = ROOT / "templates"
+#: Sablonlar iki yerde olabilir: depoda `<kok>/templates`, kurulumda ise
+#: `~/.local/share/dev-templates/templates`. install.sh bu script'i KOPYALIYOR,
+#: yani kurulu halde `__file__` artik depoda degil ve depo-goreli yol bos cikar.
+#: Depo once denenir; boylece klondan calistirmak da calisir.
+SHARE = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "dev-templates"
+TEMPLATES = next((c for c in (ROOT / "templates", SHARE / "templates") if c.is_dir()),
+                 ROOT / "templates")
 REF = os.environ.get("DEV_TEMPLATES_REF", "github:bulent-kopuklu/dev-templates")
 LANGS = ["rust", "cpp", "go", "node", "java", "android"]
 ALIAS = {"c++": "cpp", "cxx": "cpp", "c": "cpp", "ts": "node", "js": "node",
@@ -34,7 +40,11 @@ created = []
 
 
 def copy(template):
-    for f in sorted(p for p in (TEMPLATES / template).rglob("*") if p.is_file()):
+    kaynak = TEMPLATES / template
+    if not kaynak.is_dir():
+        sys.exit(f"sablon bulunamadi: {kaynak}\n"
+                 f"install.sh'i calistir; sablonlar {SHARE / 'templates'} altina kopyalanir.")
+    for f in sorted(p for p in kaynak.rglob("*") if p.is_file()):
         rel = f.relative_to(TEMPLATES / template)
         if rel.exists():
             print(f"kept:    {rel}")
