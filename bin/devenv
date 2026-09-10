@@ -147,6 +147,17 @@ def speckit():
     node_replacement()
     git_hooks()
 
+    # Living specs Companion'da opt-in. Bos ve acik bir registry specify/plan'a
+    # bir sey yuklemez; implement sahipsiz dosyalar icin capability'yi kendisi
+    # kaydeder, boylece capability niyetten dogar, sonradan koddan turetilmez.
+    ls = Path("living-specs.yml")
+    if ls.exists():
+        print(f"kept:    {ls}")
+    else:
+        ls.write_text("enabled: true\ncapabilities: []\n")
+        subprocess.run(["git", "add", "-N", str(ls)], check=True)
+        print(f"created: {ls} (living specs acik, bos; git add it to keep it)")
+
 
 def git_hooks():
     """Git extension'inin yalniz spec basina branch acan hook'unu birakir.
@@ -238,7 +249,7 @@ def main():
     ap.add_argument("--target", action="append", default=[], help="aarch64 | armv7 (repeatable)")
     ap.add_argument("--node", help="node major for .nvmrc, e.g. 22")
     ap.add_argument("--speckit", action="store_true",
-                    help="Spec Kit kur: self upgrade, init + git (spec basina branch), companion + orchestration, generic anayasa")
+                    help="Spec Kit kur: self upgrade, init + git (spec basina branch), companion + orchestration, living specs acik, generic anayasa")
     a = ap.parse_args()
 
     langs = [ALIAS.get(l.lower(), l.lower()) for l in a.langs]
