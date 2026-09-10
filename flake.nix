@@ -21,6 +21,7 @@
         android-native = template "android-native" "cmake-android helper, VSCode cmake tasks";
         init-cpp = template "init-cpp" "CMakeLists.txt + src/main.cpp for an empty project";
         claude = template "claude" "CLAUDE.md skeleton, .claude/rules/, .claude/skills/";
+        make = template "make" "root Makefile driving components/<name>/ (go, rust, cpp, node)";
         default = self.templates.base;
       };
 

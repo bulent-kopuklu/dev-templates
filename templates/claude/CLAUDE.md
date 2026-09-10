@@ -6,12 +6,24 @@
 
 - Devshell `flake.nix` ile gelir; `direnv allow` yeter. Toolchain, LSP ve formatter'lar oradan gelir, sistemden değil.
 - Diller: LANGS
-- Build / test / lint komutları:
-  <!-- `cargo build`, `cmake --build build`, `go test ./...` ... -->
+- Build / test / lint kökteki `Makefile`'dan: `make`, `make test`, `make lint`,
+  `make dist`, `make clean`, `make distclean`. Parametreler (`VARIANT`, `TARGET`,
+  `COMPONENTS`) ve varsayılanları dosyanın başında.
 
 ## Yerleşim
 
-<!-- Dizinler ve rolleri. -->
+- Kod yalnız `components/<ad>/` altında durur. Her bileşen tek dildir; manifest'i
+  (`go.mod`, `Cargo.toml`, `CMakeLists.txt`, `package.json`) kendi dizinindedir.
+  İkinci bir dil gerekiyorsa ikinci bir bileşen açılır.
+- Yeni bileşen = `components/` altında yeni dizin. `Makefile`'a dokunulmaz;
+  bileşenin dilini manifest'inden okur.
+- Kökte yalnız projenin geneline ait olan durur: `Makefile`, `flake.nix`,
+  formatter/linter config'leri, `CLAUDE.md`, `README.md`. Kök dizine kaynak kodu
+  ya da yeni dizin eklenmez.
+- Bileşenler arası sözleşme (proto, OpenAPI) onu sunan bileşenin içinde durur.
+- Build çıktısı `build/<target>/<variant>/`, release çıktısı `dist/<target>/`.
+
+<!-- Bileşenler ve rolleri. -->
 
 ## Kurallar
 

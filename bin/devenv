@@ -6,9 +6,10 @@
     devenv go --speckit
 
 Copies the templates and builds the devshell so the runtimes are on disk. It
-creates no project files and reads no project tree: languages are what you name.
+creates no source files and reads no project tree: languages are what you name.
 Nothing is committed - created files land in .git/info/exclude, except flake.nix,
-which is intent-to-added because nix reads only files git knows about.
+which is intent-to-added because nix reads only files git knows about, and the
+root Makefile, which drives components/ and belongs to the project.
 """
 import argparse, json, os, shutil, subprocess, sys, tempfile
 from pathlib import Path
@@ -142,12 +143,13 @@ def speckit():
             run("specify", "workflow", "add", str(wf))
         else:
             print(f"atlandi: orchestration workflow ({wf} yok)")
-        node_replacement()
         stop_hook()
+    node_replacement()
 
 
 def node_replacement():
-    """Orchestration'in implement govdesini Companion'in node'unun yerine koyar.
+    """Companion'in node'larinin yerine bizimkileri koyar: plan'in yerlesim
+    kurali sablondan, implement govdesi orchestration'dan.
 
     Extension `provides:` yalnizca commands/templates/scripts aliyor, yani bir
     extension proje overlay'ine (`.specify/companion/nodes/`) yazamaz. Kopyayi
@@ -155,14 +157,16 @@ def node_replacement():
     alanini korur, ona takili hook'lar fire etmeye devam eder. Geri almak icin
     dosyayi silmek yeter.
     """
-    src = Path(".specify/extensions/orchestration/nodes/implement/implement-exec.md")
-    if not src.is_file():
-        print(f"atlandi: node replacement ({src} yok)")
+    kaynaklar = [TEMPLATES / "speckit" / "nodes", Path(".specify/extensions/orchestration/nodes")]
+    dosyalar = [(k, f) for k in kaynaklar if k.is_dir() for f in sorted(k.rglob("*.md"))]
+    if not dosyalar:
+        print("atlandi: node replacement (kaynak yok)")
         return
-    dst = Path(".specify/companion/nodes/implement/implement-exec.md")
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dst)
-    print(f"created: {dst} (implement govdesi orchestration'dan)")
+    for kok, src in dosyalar:
+        dst = Path(".specify/companion/nodes") / src.relative_to(kok)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        print(f"created: {dst}")
     build = Path(".specify/extensions/companion/scripts/build-pipeline.py")
     if build.is_file():
         run("python3", str(build))
@@ -224,6 +228,11 @@ def main():
         subprocess.run(["git", "add", "-N", "flake.nix"], check=True)
         print("git:     flake.nix intent-to-added so nix can read it; git add it to keep it")
 
+    if not Path("Makefile").exists():
+        copy("make")
+        subprocess.run(["git", "add", "-N", "Makefile"], check=True)
+        print("git:     Makefile intent-to-added; it belongs to the project, git add it to keep it")
+
     if not Path(".envrc").exists():
         Path(".envrc").write_text("use flake\n")
         created.append(".envrc")
@@ -276,7 +285,7 @@ def main():
             print(f"claude:  {len(imports)} kural dosyasi import edildi")
 
     already = Path(".git/info/exclude").read_text().splitlines()
-    excluded = [f for f in created + [".direnv/"] if f != "flake.nix" and f not in already]
+    excluded = [f for f in created + [".direnv/"] if f not in ("flake.nix", "Makefile") and f not in already]
     if excluded:
         with open(".git/info/exclude", "a") as f:
             f.write("# dev-templates (local only)\n" + "\n".join(excluded) + "\n")

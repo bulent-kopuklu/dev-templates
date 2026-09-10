@@ -9,6 +9,7 @@ nix flake init -t github:bulent-kopuklu/dev-templates#rust    # rustfmt.toml
 nix flake init -t github:bulent-kopuklu/dev-templates#go      # .golangci.yml
 nix flake init -t github:bulent-kopuklu/dev-templates#node    # biome.json
 nix flake init -t github:bulent-kopuklu/dev-templates#claude  # CLAUDE.md, .claude/rules/, .claude/skills/
+nix flake init -t github:bulent-kopuklu/dev-templates#make    # root Makefile driving components/<name>/
 nix flake init -t github:bulent-kopuklu/dev-templates#shell   # shell.nix + .envrc (use nix) when flake.nix cannot be committed
 nix flake init -t github:bulent-kopuklu/dev-templates#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
 ```
@@ -25,6 +26,28 @@ Rust comes from oxalica/rust-overlay; a `rust-toolchain.toml` in `src` wins over
 the default stable toolchain (then it must list cross targets itself). Cross
 linkers are exported as `CARGO_TARGET_<TRIPLE>_LINKER`, nothing is written to
 `.cargo/config.toml`. Node follows `.nvmrc` / `.node-version` (`22` → `nodejs_22`), default is nixpkgs' `nodejs`; `bun` is the default package manager for new projects, pnpm/npm are used when their lockfile exists.
+
+## Layout and the root Makefile
+
+Code lives under `components/<name>/`, one language per component, its manifest
+(`go.mod`, `Cargo.toml`, `CMakeLists.txt`, `package.json`) inside it. The root
+`Makefile` reads each component's language from that manifest, so a new
+component is just a new directory. Gradle (java, android) is not driven.
+
+```bash
+make                                   # build, VARIANT=debug TARGET=host
+make build VARIANT=release TARGET=aarch64
+make test COMPONENTS="api agent"       # test is host-only
+make build-agent                       # one component; also test-<name>, lint-<name>
+make dist TARGET=armv7                 # release build → dist/armv7/
+make clean                             # build/
+make distclean                         # + dist/, components/*/{node_modules,target}
+```
+
+Output goes to `build/<target>/<variant>/bin`. With `--speckit`, `devenv` also
+replaces Companion's `plan-doc` node so a plan places its paths in this layout
+instead of Spec Kit's `src/` default; the rule itself is in the `CLAUDE.md`
+template under `## Yerleşim`.
 
 ## Claude Code skill
 
