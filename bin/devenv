@@ -137,6 +137,11 @@ def speckit():
         print(f"atlandi: companion workflow ({wf} yok)")
 
     if ORCHESTRATION:
+        wf = Path(".specify/extensions/orchestration/workflows/orchestration.workflow.yml")
+        if wf.is_file():
+            run("specify", "workflow", "add", str(wf))
+        else:
+            print(f"atlandi: orchestration workflow ({wf} yok)")
         node_replacement()
         stop_hook()
 
