@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SHARE = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "dev-templates"
 TEMPLATES = next((c for c in (ROOT / "templates", SHARE / "templates") if c.is_dir()),
                  ROOT / "templates")
-REF = os.environ.get("DEV_TEMPLATES_REF", "github:bulent-kopuklu/dev-templates")
+REF = os.environ.get("DEV_TEMPLATES_REF", "github:bulent-kopuklu/devenv")
 LANGS = ["rust", "cpp", "go", "node", "java", "android"]
 ALIAS = {"c++": "cpp", "cxx": "cpp", "c": "cpp", "ts": "node", "js": "node",
          "typescript": "node", "golang": "go", "arm64": "aarch64", "arm": "armv7", "armv7l": "armv7"}
@@ -221,7 +221,7 @@ def main():
     else:
         copy("base")
         edit("flake.nix", lambda t: t
-             .replace('dev-templates.url = "github:bulent-kopuklu/dev-templates";',
+             .replace('dev-templates.url = "github:bulent-kopuklu/devenv";',
                       f'dev-templates.url = "{REF}";')
              .replace('  langs = [ ];', nix_list("langs", langs))
              .replace('  targets = [ ];', nix_list("targets", targets) if targets else '  targets = [ ];'))

@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
-    dev-templates.url = "github:bulent-kopuklu/dev-templates";
+    dev-templates.url = "github:bulent-kopuklu/devenv";
     dev-templates.inputs.nixpkgs.follows = "nixpkgs";
   };
 

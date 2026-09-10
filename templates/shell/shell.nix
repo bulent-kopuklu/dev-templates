@@ -1,7 +1,7 @@
 # Devshell for a repository whose flake.nix cannot be committed (foreign project).
 # nix-shell reads this file by path, so git never needs to know about it.
 let
-  dev = builtins.getFlake "github:bulent-kopuklu/dev-templates/DEV_TEMPLATES_REV";
+  dev = builtins.getFlake "github:bulent-kopuklu/devenv/DEV_TEMPLATES_REV";
   pkgs = dev.inputs.nixpkgs.legacyPackages.${builtins.currentSystem};
 
   langs = [ ];    # rust cpp go node java android

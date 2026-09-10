@@ -3,15 +3,15 @@
 Project scaffolding as `nix flake init` templates plus a devshell library.
 
 ```bash
-nix flake init -t github:bulent-kopuklu/dev-templates#base    # flake.nix, .envrc, .gitignore
-nix flake init -t github:bulent-kopuklu/dev-templates#cpp     # .clangd, .clang-format, .editorconfig
-nix flake init -t github:bulent-kopuklu/dev-templates#rust    # rustfmt.toml
-nix flake init -t github:bulent-kopuklu/dev-templates#go      # .golangci.yml
-nix flake init -t github:bulent-kopuklu/dev-templates#node    # biome.json
-nix flake init -t github:bulent-kopuklu/dev-templates#claude  # CLAUDE.md, .claude/rules/, .claude/skills/
-nix flake init -t github:bulent-kopuklu/dev-templates#make    # root Makefile driving components/<name>/
-nix flake init -t github:bulent-kopuklu/dev-templates#shell   # shell.nix + .envrc (use nix) when flake.nix cannot be committed
-nix flake init -t github:bulent-kopuklu/dev-templates#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
+nix flake init -t github:bulent-kopuklu/devenv#base    # flake.nix, .envrc, .gitignore
+nix flake init -t github:bulent-kopuklu/devenv#cpp     # .clangd, .clang-format, .editorconfig
+nix flake init -t github:bulent-kopuklu/devenv#rust    # rustfmt.toml
+nix flake init -t github:bulent-kopuklu/devenv#go      # .golangci.yml
+nix flake init -t github:bulent-kopuklu/devenv#node    # biome.json
+nix flake init -t github:bulent-kopuklu/devenv#claude  # CLAUDE.md, .claude/rules/, .claude/skills/
+nix flake init -t github:bulent-kopuklu/devenv#make    # root Makefile driving components/<name>/
+nix flake init -t github:bulent-kopuklu/devenv#shell   # shell.nix + .envrc (use nix) when flake.nix cannot be committed
+nix flake init -t github:bulent-kopuklu/devenv#init-cpp  # CMakeLists.txt + src/main.cpp for an empty project
 ```
 
 Language rules for the agent live in `templates/rules/<lang>.md`. For every
