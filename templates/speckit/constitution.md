@@ -1,5 +1,5 @@
 <!--
-Çekirdek ilkeler. Bunlar her projede geçerlidir; projeye özel ilkeler VII'den
+Çekirdek ilkeler. Bunlar her projede geçerlidir; projeye özel ilkeler VIII'den
 itibaren ALTINA eklenir. Buradaki maddeler silinmez, yalnız Yönetişim
 bölümündeki usulle değiştirilir.
 -->
@@ -95,6 +95,27 @@ doldurulur. Teknik terimler çevrilmez. İstisna: kod ve commit mesajları
 
 Gerekçe: Dokümanın okuyucusu ekiptir; okunmayan doküman yazılmamış sayılır.
 
+### VII. Kanıtlanmış Yaklaşım Yeniden Keşfedilmez
+
+Bir tasarım kararından önce — mimari, protokol, veri modeli, algoritma,
+operasyon akışı — aynı problemi çözmüş ve üretimde kendini kanıtlamış çözümler
+İNCELENİR: yaygın açık kaynak projeler, standartlar, olgun ürünler. Spec girdisi
+bir referans verdiyse inceleme ondan başlar.
+
+Örnek, problemin bağlamını (çalışma ortamı, ölçek, kısıtlar) paylaşan çözümler
+arasından seçilir; bağlamı farklı bir örnek, farkı yazılmadan dayanak SAYILMAZ.
+Örnekte ne yapıldığı modelin hafızasından değil kaynağından okunur ve araştırma
+notu her karar için onu kaynağıyla (repo, dosya, doküman, sürüm) yazar. Örneğin
+yaklaşımı benimsenmezse neden benimsenmediği ve farkın hangi gereksinimden
+geldiği yazılır; gerekçesiz sapma kanıtsız teknik iddia sayılır (İlke I).
+
+Örnek bir yaklaşımın kaynağıdır, davranışının kanıtı değildir: örneğin
+başardığı söylenen her şey — hız, dayanıklılık, ölçek — İlke I'e tabidir.
+
+Gerekçe: Üretimde yıllarca sınanmış bir çözüm, sıfırdan bulunan yaklaşımın henüz
+karşılaşmadığı arızaları çoktan görmüştür. Onu yeniden keşfetmek, aynı arızaları
+sırayla yeniden yaşamaktır.
+
 ## Spike
 
 İlke I'in (b) yolu **spike**'tır: dış dünyanın davranışı hakkında bir iddiaya
@@ -156,7 +177,7 @@ gösteremez.
 - **Değişiklik usulü**: Değişiklik önerisi, hangi ilkeyi neden değiştirdiğini ve
   etkilediği mevcut kararları yazılı olarak belirtir. Proje sahibi onaylamadan
   hiçbir ilke eklenemez, değiştirilemez veya kaldırılamaz.
-- **Çekirdek ilkeler**: I–VI ortaktır ve projeye özel ilkeler VII'den itibaren
+- **Çekirdek ilkeler**: I–VII ortaktır ve projeye özel ilkeler VIII'den itibaren
   eklenir. Çekirdekte yapılan bir değişiklik yalnız bu projede kalır; başka
   projelerde de geçerli olması isteniyorsa çekirdeğin kendisine taşınmalıdır,
   yoksa bir sonraki projede o madde yoktur.
@@ -166,4 +187,4 @@ gösteremez.
   edilir. İlkeden sapma; ya reddedilir ya da gerekçesi ve süresi yazılı bir
   istisna olarak kaydedilir. Sessiz sapma kabul edilmez.
 
-**Version**: 1.0.0
+**Version**: 1.1.0
