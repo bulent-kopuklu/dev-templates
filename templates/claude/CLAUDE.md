@@ -15,13 +15,17 @@
 - Kod yalnız `components/<ad>/` altında durur. Her bileşen tek dildir; manifest'i
   (`go.mod`, `Cargo.toml`, `CMakeLists.txt`, `package.json`) kendi dizinindedir.
   İkinci bir dil gerekiyorsa ikinci bir bileşen açılır.
+- Kurulum ve ölçüm kodu `components/` dışında, kökte durur ve `make` ona
+  dokunmaz: `install/` bir kez kurar, `proof/` ölçer ve `components/`'ı import
+  etmez. Üretimde koşan, kuran ve ölçen kod ayrı dizinlerdedir (anayasa:
+  "Kanıt Ölçtüğü Şeyin İçinden Çıkmaz").
 - Yeni bileşen = `components/` altında yeni dizin. `Makefile`'a dokunulmaz;
   bileşenin dilini manifest'inden okur.
 - Kökte yalnız projenin geneline ait olan durur: `Makefile`, `flake.nix`,
-  formatter/linter config'leri, `CLAUDE.md`, `README.md`. Spec Kit kullanılıyorsa
-  onun yerleri de: `specs/`, `.specify/`, living specs'in `living-specs.yml`'ı ve
-  `capabilities/`'i. Kök dizine kaynak kodu ya da bunların dışında yeni dizin
-  eklenmez.
+  formatter/linter config'leri, `CLAUDE.md`, `README.md`, `install/`, `proof/`.
+  Spec Kit kullanılıyorsa onun yerleri de: `specs/`, `.specify/`, living
+  specs'in `living-specs.yml`'ı ve `capabilities/`'i. Kök dizine kaynak kodu ya
+  da bunların dışında yeni dizin eklenmez.
 - Bileşenler arası sözleşme (proto, OpenAPI) kendi bileşeninde durur
   (`components/<ad>/`, manifest `buf.yaml`). Kodunu onu kullanan her bileşen
   kendi build'inde üretir: Go `//go:generate`, Rust `build.rs`.
