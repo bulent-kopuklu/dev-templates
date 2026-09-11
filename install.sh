@@ -21,6 +21,12 @@ for tool in "$here"/bin/*; do
   echo "kopyalandi: $bindest/$(basename "$tool")"
 done
 
+# Kurulu kopya depodan kopuk; hangi commit'ten geldigini kendisi soyleyebilsin.
+build="$(git -C "$here" log -1 --format='%h %cs')"
+[ -z "$(git -C "$here" status --porcelain)" ] || build="$build +degisiklik"
+sed -i "s|^BUILD = \"@BUILD@\"|BUILD = \"$build\"|" "$bindest/devenv"
+echo "surum:      $("$bindest/devenv" --version)"
+
 # Sablonlar: devenv onlari kurulu halde buradan okur. Aynalama (once sil, sonra
 # kopyala) cunku depodan kaldirilan bir sablon kurulumda kalmamali.
 share="${XDG_DATA_HOME:-$HOME/.local/share}/dev-templates"

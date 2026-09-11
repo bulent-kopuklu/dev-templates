@@ -37,7 +37,23 @@ AI_RULES = TEMPLATES / "rules"
 COMPANION = os.environ.get("SPECKIT_COMPANION", "https://github.com/alfredoperez/speckit-companion")
 ORCHESTRATION = os.environ.get("SPECKIT_ORCHESTRATION", "")
 
+VERSION = "1.0.0"
+#: install.sh kopyalarken bunu deponun commit'iyle degistirir; depodan
+#: calistirilinca yerinde kalir ve git'ten okunur.
+BUILD = "@BUILD@"
+
 created = []
+
+
+def build_info():
+    if BUILD != "@" + "BUILD@":
+        return BUILD
+    git = lambda *a: subprocess.run(["git", "-C", str(ROOT), *a],
+                                     capture_output=True, text=True).stdout.strip()
+    commit = git("log", "-1", "--format=%h %cs")
+    if not commit:
+        return "kaynak bilinmiyor"
+    return commit + (" +degisiklik" if git("status", "--porcelain") else "")
 
 
 def copy(template):
@@ -273,6 +289,7 @@ def stop_hook():
 
 def main():
     ap = argparse.ArgumentParser(description="dev-templates devshell for this project")
+    ap.add_argument("--version", action="version", version=f"devenv {VERSION} ({build_info()})")
     ap.add_argument("langs", nargs="+", help=" | ".join(LANGS))
     ap.add_argument("--target", action="append", default=[], help="aarch64 | armv7 (repeatable)")
     ap.add_argument("--node", help="node major for .nvmrc, e.g. 22")

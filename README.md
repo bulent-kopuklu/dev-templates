@@ -70,7 +70,9 @@ be green. Install once (symlinks into `~/.claude/skills`, so `git pull` updates 
 `install.sh` kopyalar, symlink kurmaz: `bin/` → `~/.local/bin`, `templates/` →
 `~/.local/share/dev-templates/templates`. `devenv` şablonları önce depoda
 (`<kök>/templates`), yoksa oradan okur — klondan çalıştırmak da kurulu hâli
-kullanmak da çalışır.
+kullanmak da çalışır. `devenv --version` sürümü ve kurulu kopyanın geldiği
+commit'i basar (`devenv 1.0.0 (d7b508c 2026-09-11)`); commit'lenmemiş
+değişiklikten kurulduysa `+degisiklik` ekler. `VERSION` elle artırılır.
 
 ## Repos on the git server
 
