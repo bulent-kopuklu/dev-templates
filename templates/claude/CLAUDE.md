@@ -33,4 +33,7 @@
 
 - `~/.claude/CLAUDE.md` içindeki global kurallar burada da geçerli; bu dosya yalnızca projeye özel olanları taşır.
 
+<!-- SPECKIT START -->
+<!-- SPECKIT END -->
+
 <!-- /init çıktısını bu satırın altına ekle; yukarıdaki bölümleri koru. -->
