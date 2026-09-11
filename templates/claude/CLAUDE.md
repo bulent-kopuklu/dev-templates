@@ -22,7 +22,9 @@
   onun yerleri de: `specs/`, `.specify/`, living specs'in `living-specs.yml`'ı ve
   `capabilities/`'i. Kök dizine kaynak kodu ya da bunların dışında yeni dizin
   eklenmez.
-- Bileşenler arası sözleşme (proto, OpenAPI) onu sunan bileşenin içinde durur.
+- Bileşenler arası sözleşme (proto, OpenAPI) kendi bileşeninde durur
+  (`components/<ad>/`, manifest `buf.yaml`). Kodunu onu kullanan her bileşen
+  kendi build'inde üretir: Go `//go:generate`, Rust `build.rs`.
 - Build çıktısı `build/<target>/<variant>/`, release çıktısı `dist/<target>/`.
 
 <!-- Bileşenler ve rolleri. -->

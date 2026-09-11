@@ -37,6 +37,9 @@ Code lives under `components/<name>/`, one language per component, its manifest
 (`go.mod`, `Cargo.toml`, `CMakeLists.txt`, `package.json`) inside it. The root
 `Makefile` reads each component's language from that manifest, so a new
 component is just a new directory. Gradle (java, android) is not driven.
+A shared contract is a component too (`buf.yaml`): it is only linted
+(`buf lint`), never built — each consumer generates its own code during its
+build (`go generate` runs before `go build`; Rust uses `build.rs`).
 
 ```bash
 make                                   # build, VARIANT=debug TARGET=host

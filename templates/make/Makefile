@@ -38,12 +38,13 @@ manifest_go.mod         := go
 manifest_Cargo.toml     := rust
 manifest_CMakeLists.txt := cpp
 manifest_package.json   := node
-manifests = $(notdir $(wildcard $(addprefix components/$1/,go.mod Cargo.toml CMakeLists.txt package.json)))
+manifest_buf.yaml       := proto
+manifests = $(notdir $(wildcard $(addprefix components/$1/,go.mod Cargo.toml CMakeLists.txt package.json buf.yaml)))
 kind = $(if $(filter 1,$(words $(call manifests,$1))),$(manifest_$(call manifests,$1)),$(error components/$1: tek manifest bekleniyor, bulunan: $(or $(call manifests,$1),yok)))
 
 go_flags_debug   := -gcflags='all=-N -l'
 go_flags_release := -trimpath -ldflags='-s -w'
-go_build = cd components/$1 && $(if $(CROSS),GOOS=linux $(goarch_$(TARGET))) go build $(go_flags_$(VARIANT)) -o $(BIN)/ ./...
+go_build = cd components/$1 && go generate ./... && $(if $(CROSS),GOOS=linux $(goarch_$(TARGET))) go build $(go_flags_$(VARIANT)) -o $(BIN)/ ./...
 go_test  = cd components/$1 && go test ./...
 go_lint  = cd components/$1 && golangci-lint run ./...
 
@@ -72,6 +73,12 @@ node_deps  = cd components/$1 && { [ -d node_modules ] || npm install --no-audit
 node_build = $(node_deps) && npm run --if-present build
 node_test  = $(node_deps) && npm run --if-present test
 node_lint  = biome check components/$1
+
+# Sözleşme bileşeni derlenmez: kodunu onu kullanan bileşen kendi build'inde
+# üretir (Go `go generate`, Rust `build.rs`). Burada yalnız denetlenir.
+proto_build = @:
+proto_test  = @:
+proto_lint  = cd components/$1 && buf lint
 
 .DEFAULT_GOAL := build
 .PHONY: build test lint dist clean distclean
